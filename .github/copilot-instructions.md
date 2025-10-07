@@ -13,8 +13,8 @@ Sistema de gestión de puntos de fidelidad para clientes con las siguientes func
 - [x] ✅ Clarificar Requisitos del Proyecto
 - [x] ✅ Crear estructura inicial del proyecto
 - [x] ✅ Scaffolding del Proyecto Laravel
-- [ ] Personalizar el Proyecto (Crear Migraciones y Modelos)
-- [ ] Instalar Extensiones Requeridas
+- [x] ✅ Personalizar el Proyecto (Crear Migraciones y Modelos)
+- [x] ✅ Instalar Extensiones Requeridas (No requeridas)
 - [ ] Compilar el Proyecto
 - [ ] Crear y Ejecutar Tareas
 - [ ] Lanzar el Proyecto

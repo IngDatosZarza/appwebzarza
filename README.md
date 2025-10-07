@@ -77,12 +77,13 @@ php artisan key:generate
 4. **Configurar base de datos**
    Editar el archivo `.env`:
 ```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=puntos_fidelidad
-DB_USERNAME=your_username
-DB_PASSWORD=your_password
+DB_CONNECTION=pgsql
+DB_HOST=localhost
+DB_PORT=5432
+DB_DATABASE=postgres
+DB_USERNAME=appwebuser
+DB_PASSWORD=appwebpass
+DB_SCHEMA=appweb
 ```
 
 5. **Ejecutar migraciones**
@@ -90,10 +91,15 @@ DB_PASSWORD=your_password
 php artisan migrate
 ```
 
-6. **Opcional: Ejecutar seeders**
-```bash
-php artisan db:seed
-```
+**Nota**: Este proyecto está configurado para PostgreSQL y usa el schema `appweb`. Las migraciones se han ejecutado exitosamente.
+
+6. **Datos de ejemplo incluidos**
+   El sistema incluye datos de ejemplo pre-configurados:
+   - **Admin**: `admin@puntosfidelidad.com` / `password123`
+   - **Cliente**: `cliente@example.com` / `password123` (150 puntos)
+   - 3 sucursales operativas
+   - 3 cupones disponibles para canje
+   - 1 compra de ejemplo registrada
 
 ## Modelos y Relaciones
 
@@ -159,8 +165,18 @@ app/
 
 database/
 ├── migrations/         # Migraciones de BD
-└── seeders/           # Datos de prueba
+├── seeders/           # Datos de prueba
+└── queries.sql        # Consultas SQL útiles
 ```
+
+### Consultas SQL Útiles
+El archivo `database/queries.sql` contiene consultas predefinidas para:
+- Verificar estructura de tablas
+- Consultar saldos de puntos por usuario
+- Historial de compras y transacciones
+- Reportes de ventas por sucursal
+- Sistema de auditoría
+- Cupones disponibles por usuario
 
 ## Contribución
 1. Fork el proyecto
