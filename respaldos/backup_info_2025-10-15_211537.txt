@@ -1,0 +1,24 @@
+ZarzaPoints - Información del Respaldo
+======================================
+Fecha: 2025-10-15 21:15:38
+Archivo: zarzapoints_backup_2025-10-15_211537.sql
+Tamaño: 42.92 KB
+Tablas: 13
+
+Lista de tablas:
+  - auditoria: 7 registros
+  - compras: 5 registros
+  - cupones: 10 registros
+  - cupones_asignados: 5 registros
+  - direcciones: 1 registros
+  - migrations: 11 registros
+  - notificaciones: 14 registros
+  - puntos: 9 registros
+  - redenciones: 0 registros
+  - sessions: 15 registros
+  - sucursales: 3 registros
+  - transacciones_puntos: 10 registros
+  - usuarios: 12 registros
+
+Comando para restaurar:
+psql -h localhost -U appwebuser -d postgres -f zarzapoints_backup_2025-10-15_211537.sql

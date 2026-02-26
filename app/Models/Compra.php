@@ -15,7 +15,11 @@ class Compra extends Model
         'usuario_id',
         'sucursal_id',
         'monto',
+        'numero_ticket',
         'puntos_generados',
+        'descripcion',
+        'metodo_pago',
+        'fecha_compra',
         'creado_por',
     ];
 
@@ -24,6 +28,7 @@ class Compra extends Model
         return [
             'monto' => 'decimal:2',
             'puntos_generados' => 'integer',
+            'fecha_compra' => 'datetime',
         ];
     }
 

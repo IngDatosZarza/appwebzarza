@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Formulario Registro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
+        <h1 class="text-2xl font-bold mb-4">🧪 Diagnóstico del Formulario de Registro</h1>
+        
+        <div id="results" class="space-y-4">
+            <div class="p-4 bg-blue-50 border border-blue-200 rounded">
+                <p class="font-semibold">Ejecutando pruebas...</p>
+            </div>
+        </div>
+
+        <div class="mt-6 p-4 bg-gray-50 rounded border border-gray-200">
+            <h3 class="font-bold mb-2">Instrucciones:</h3>
+            <ol class="list-decimal list-inside space-y-1 text-sm">
+                <li>Este script probará el registro desde el navegador</li>
+                <li>Revisa la consola del navegador (F12) para ver detalles</li>
+                <li>Si falla, revisa el archivo storage/logs/laravel.log</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+        
+        function addResult(message, type = 'info') {
+            const colors = {
+                success: 'bg-green-50 border-green-200 text-green-800',
+                error: 'bg-red-50 border-red-200 text-red-800',
+                warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
+                info: 'bg-blue-50 border-blue-200 text-blue-800'
+            };
+            
+            const div = document.createElement('div');
+            div.className = `p-4 border rounded ${colors[type]}`;
+            div.innerHTML = `<p>${message}</p>`;
+            resultsDiv.appendChild(div);
+        }
+
+        async function runTests() {
+            resultsDiv.innerHTML = '';
+            console.clear();
+            console.log('=== INICIANDO PRUEBAS ===');
+
+            try {
+                // 1. Verificar que el servidor esté corriendo
+                addResult('1️⃣ Verificando servidor...', 'info');
+                const homeResponse = await fetch('/');
+                if (homeResponse.ok) {
+                    addResult('✅ Servidor Laravel respondiendo correctamente', 'success');
+                    console.log('✅ Servidor OK');
+                } else {
+                    addResult('❌ Servidor no responde correctamente (HTTP ' + homeResponse.status + ')', 'error');
+                    return;
+                }
+
+                // 2. Obtener formulario y CSRF token
+                addResult('2️⃣ Obteniendo formulario de registro...', 'info');
+                const formResponse = await fetch('/register');
+                const formHtml = await formResponse.text();
+                
+                // Extraer CSRF token
+                const tokenMatch = formHtml.match(/name="_token"\s+value="([^"]+)"/);
+                const csrfToken = tokenMatch ? tokenMatch[1] : null;
+                
+                if (csrfToken) {
+                    addResult('✅ Token CSRF obtenido: ' + csrfToken.substring(0, 20) + '...', 'success');
+                    console.log('✅ CSRF Token:', csrfToken.substring(0, 40) + '...');
+                } else {
+                    addResult('❌ No se pudo obtener el token CSRF', 'error');
+                    return;
+                }
+
+                // 3. Obtener código postal
+                addResult('3️⃣ Obteniendo datos de código postal...', 'info');
+                const estadosResponse = await fetch('/api/codigos-postales/estados');
+                const estadosData = await estadosResponse.json();
+                
+                if (!estadosData.success) {
+                    addResult('❌ Error al obtener estados', 'error');
+                    return;
+                }
+                
+                const coloniaResponse = await fetch('/api/codigos-postales/colonias?estado=JALISCO&municipio=GUADALAJARA');
+                const coloniaData = await coloniaResponse.json();
+                
+                if (!coloniaData.success || coloniaData.data.length === 0) {
+                    addResult('❌ Error al obtener colonias', 'error');
+                    return;
+                }
+                
+                const primeraColonia = coloniaData.data[0];
+                addResult('✅ Datos de ubicación obtenidos: ' + primeraColonia.colonia, 'success');
+
+                // 4. Preparar datos del formulario
+                const timestamp = Date.now();
+                const formData = new URLSearchParams({
+                    _token: csrfToken,
+                    nombres: 'Test',
+                    apellido_paterno: 'Usuario',
+                    apellido_materno: 'Web',
+                    email: `test.web${timestamp}@example.com`,
+                    email_confirmation: `test.web${timestamp}@example.com`,
+                    telefono: '+52' + Math.floor(3300000000 + Math.random() * 99999999),
+                    fecha_nacimiento: '1995-05-15',
+                    rfc: 'USWT950515ABC',
+                    password: 'Password123!',
+                    password_confirmation: 'Password123!',
+                    estado: 'JALISCO',
+                    municipio: 'GUADALAJARA',
+                    codigo_postal_id: primeraColonia.id.toString(),
+                    colonia: primeraColonia.colonia,
+                    calle: 'Av. Hidalgo',
+                    numero: '456'
+                });
+
+                addResult('4️⃣ Enviando formulario de registro...', 'info');
+                console.log('📤 Datos a enviar:', Object.fromEntries(formData));
+
+                // 5. Enviar formulario
+                const registerResponse = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData.toString(),
+                    redirect: 'manual' // No seguir redirecciones automáticamente
+                });
+
+                console.log('📥 Respuesta HTTP:', registerResponse.status);
+                console.log('📥 Headers:', Object.fromEntries(registerResponse.headers.entries()));
+
+                // Verificar resultado
+                if (registerResponse.status === 0) {
+                    // Redirección opaca
+                    addResult('✅ Formulario enviado (redirección detectada)', 'success');
+                    addResult('🔍 Verificando en base de datos...', 'info');
+                    
+                    // Esperar un momento para que se complete la transacción
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    addResult('✅ REGISTRO COMPLETADO - Revisa storage/logs/laravel.log para confirmar', 'success');
+                    addResult('📧 Email registrado: ' + formData.get('email'), 'success');
+                    
+                } else if (registerResponse.status === 302) {
+                    addResult('✅ Redirección recibida (302)', 'success');
+                    const location = registerResponse.headers.get('Location');
+                    if (location) {
+                        addResult('📍 Redirigiendo a: ' + location, 'success');
+                        if (location.includes('/login')) {
+                            addResult('🎉 REGISTRO EXITOSO - Usuario redirigido a login', 'success');
+                        }
+                    }
+                } else if (registerResponse.status === 200) {
+                    addResult('⚠️ Respuesta 200 (sin redirección)', 'warning');
+                    const responseText = await registerResponse.text();
+                    
+                    // Buscar errores en HTML
+                    const errorMatch = responseText.match(/<p[^>]*class="[^"]*text-red[^"]*"[^>]*>([^<]+)<\/p>/);
+                    if (errorMatch) {
+                        addResult('❌ Error de validación: ' + errorMatch[1], 'error');
+                    } else {
+                        addResult('⚠️ No se encontraron errores visibles en la respuesta', 'warning');
+                        console.log('📄 Primeros 500 caracteres de respuesta:', responseText.substring(0, 500));
+                    }
+                } else if (registerResponse.status === 419) {
+                    addResult('❌ Error 419: Token CSRF inválido o expirado', 'error');
+                    addResult('💡 Solución: Recarga la página e intenta de nuevo', 'info');
+                } else {
+                    addResult('❌ Error inesperado: HTTP ' + registerResponse.status, 'error');
+                }
+
+                // 6. Instrucciones finales
+                addResult('📋 Revisa el archivo storage/logs/laravel.log para ver los logs detallados', 'info');
+
+            } catch (error) {
+                addResult('❌ Error en las pruebas: ' + error.message, 'error');
+                console.error('Error completo:', error);
+            }
+        }
+
+        // Ejecutar pruebas al cargar
+        runTests();
+    </script>
+</body>
+</html>

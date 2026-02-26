@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro Debug - ZarzaPoints</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+<body class="bg-gradient-to-br from-purple-600 to-pink-600 min-h-screen flex items-center justify-center py-12 px-4">
+    <div class="max-w-2xl w-full bg-white rounded-lg shadow-xl p-8">
+        <h2 class="text-3xl font-bold text-center mb-6 text-gray-800">
+            🐛 Formulario de Registro - Debug
+        </h2>
+
+        <!-- Indicador de estado -->
+        <div id="status" class="mb-4 p-4 rounded hidden">
+            <p id="statusText"></p>
+        </div>
+
+        <form id="registerForm" method="POST" action="/register" class="space-y-4">
+            <input type="hidden" name="_token" id="csrfToken" value="">
+            
+            <!-- Fila 1 -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Nombres *</label>
+                    <input type="text" name="nombres" required class="w-full px-3 py-2 border rounded">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Apellido Paterno *</label>
+                    <input type="text" name="apellido_paterno" required class="w-full px-3 py-2 border rounded">
+                </div>
+            </div>
+
+            <!-- Fila 2 -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Apellido Materno *</label>
+                    <input type="text" name="apellido_materno" required class="w-full px-3 py-2 border rounded">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Fecha de Nacimiento *</label>
+                    <input type="date" name="fecha_nacimiento" required class="w-full px-3 py-2 border rounded">
+                </div>
+            </div>
+
+            <!-- Fila 3 -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Email *</label>
+                    <input type="email" name="email" required class="w-full px-3 py-2 border rounded">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Confirmar Email *</label>
+                    <input type="email" name="email_confirmation" required class="w-full px-3 py-2 border rounded">
+                </div>
+            </div>
+
+            <!-- Fila 4 -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Teléfono *</label>
+                    <input type="text" name="telefono" placeholder="+521234567890" required class="w-full px-3 py-2 border rounded">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">RFC *</label>
+                    <input type="text" name="rfc" placeholder="ABCD123456EFG" maxlength="13" required class="w-full px-3 py-2 border rounded">
+                </div>
+            </div>
+
+            <!-- Fila 5 -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Contraseña *</label>
+                    <input type="password" name="password" required class="w-full px-3 py-2 border rounded">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Confirmar Contraseña *</label>
+                    <input type="password" name="password_confirmation" required class="w-full px-3 py-2 border rounded">
+                </div>
+            </div>
+
+            <!-- Ubicación -->
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Estado *</label>
+                    <select name="estado" id="estado" required class="w-full px-3 py-2 border rounded">
+                        <option value="">Seleccionar</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Municipio *</label>
+                    <select name="municipio" id="municipio" required class="w-full px-3 py-2 border rounded">
+                        <option value="">Seleccionar</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Colonia *</label>
+                    <select name="codigo_postal_id" id="codigo_postal_id" required class="w-full px-3 py-2 border rounded">
+                        <option value="">Seleccionar</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Dirección -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Calle *</label>
+                    <input type="text" name="calle" required class="w-full px-3 py-2 border rounded">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Número *</label>
+                    <input type="text" name="numero" required class="w-full px-3 py-2 border rounded">
+                </div>
+            </div>
+
+            <!-- Hidden colonia text -->
+            <input type="hidden" name="colonia" id="coloniaHidden">
+
+            <!-- Botón -->
+            <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded transition">
+                🚀 Registrar (Debug)
+            </button>
+        </form>
+
+        <div class="mt-4 p-4 bg-gray-100 rounded text-sm">
+            <p class="font-bold mb-2">📋 Estado del formulario:</p>
+            <ul id="formStatus" class="list-disc list-inside space-y-1 text-gray-700">
+                <li>Esperando datos...</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('registerForm');
+        const statusDiv = document.getElementById('status');
+        const statusText = document.getElementById('statusText');
+        const formStatusList = document.getElementById('formStatus');
+        
+        // Obtener CSRF token
+        fetch('/register')
+            .then(r => r.text())
+            .then(html => {
+                const match = html.match(/name="_token"\s+value="([^"]+)"/);
+                if (match) {
+                    document.getElementById('csrfToken').value = match[1];
+                    updateStatus('✅ Token CSRF cargado');
+                }
+            });
+
+        // Cargar estados
+        fetch('/api/codigos-postales/estados')
+            .then(r => r.json())
+            .then(data => {
+                const select = document.getElementById('estado');
+                data.data.forEach(estado => {
+                    select.innerHTML += `<option value="${estado}">${estado}</option>`;
+                });
+                updateStatus('✅ Estados cargados');
+            });
+
+        // Cargar municipios cuando se selecciona estado
+        document.getElementById('estado').addEventListener('change', function() {
+            const estado = this.value;
+            if (!estado) return;
+            
+            const municipioSelect = document.getElementById('municipio');
+            municipioSelect.innerHTML = '<option value="">Cargando...</option>';
+            
+            fetch(`/api/codigos-postales/municipios?estado=${estado}`)
+                .then(r => r.json())
+                .then(data => {
+                    municipioSelect.innerHTML = '<option value="">Seleccionar</option>';
+                    data.data.forEach(mun => {
+                        municipioSelect.innerHTML += `<option value="${mun}">${mun}</option>`;
+                    });
+                    updateStatus(`✅ Municipios de ${estado} cargados`);
+                });
+        });
+
+        // Cargar colonias cuando se selecciona municipio
+        document.getElementById('municipio').addEventListener('change', function() {
+            const estado = document.getElementById('estado').value;
+            const municipio = this.value;
+            if (!estado || !municipio) return;
+            
+            const coloniaSelect = document.getElementById('codigo_postal_id');
+            coloniaSelect.innerHTML = '<option value="">Cargando...</option>';
+            
+            fetch(`/api/codigos-postales/colonias?estado=${estado}&municipio=${municipio}`)
+                .then(r => r.json())
+                .then(data => {
+                    coloniaSelect.innerHTML = '<option value="">Seleccionar</option>';
+                    data.data.forEach(col => {
+                        coloniaSelect.innerHTML += `<option value="${col.id}" data-colonia="${col.colonia}">${col.colonia} (${col.codigo_postal})</option>`;
+                    });
+                    updateStatus(`✅ Colonias de ${municipio} cargadas`);
+                });
+        });
+
+        // Actualizar colonia hidden
+        document.getElementById('codigo_postal_id').addEventListener('change', function() {
+            const selected = this.options[this.selectedIndex];
+            if (selected.value) {
+                document.getElementById('coloniaHidden').value = selected.dataset.colonia;
+            }
+        });
+
+        function updateStatus(message) {
+            const li = document.createElement('li');
+            li.textContent = message;
+            formStatusList.appendChild(li);
+        }
+
+        // Interceptar submit para debug
+        form.addEventListener('submit', function(e) {
+            console.log('📤 FORMULARIO ENVIÁNDOSE');
+            console.log('Datos del formulario:', new FormData(form));
+            
+            // Mostrar status
+            statusDiv.className = 'mb-4 p-4 rounded bg-blue-100 border border-blue-300';
+            statusText.textContent = '⏳ Enviando formulario...';
+            
+            // NO prevenir - dejar que se envíe normalmente
+            // Solo logueamos para debug
+            console.log('✅ Formulario enviado al servidor');
+        });
+
+        // Detectar errores de validación HTML5
+        form.addEventListener('invalid', function(e) {
+            console.warn('⚠️ Campo inválido:', e.target.name);
+            statusDiv.className = 'mb-4 p-4 rounded bg-yellow-100 border border-yellow-300';
+            statusText.textContent = '⚠️ Por favor completa todos los campos requeridos';
+        }, true);
+    </script>
+</body>
+</html>

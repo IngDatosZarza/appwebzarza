@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrarse - FidelityPoints</title>
+    <!-- Tailwind CSS CDN - Solo para desarrollo, cambiar a build para producción -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    
+    <style>
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .form-input:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-2xl w-full space-y-8">
+        <div>
+            <div class="text-center">
+                <div class="mx-auto h-16 w-16 bg-white rounded-full flex items-center justify-center mb-4">
+                    <i class="fas fa-user-plus text-purple-600 text-2xl"></i>
+                </div>
+                <h2 class="text-3xl font-extrabold text-white">
+                    Crear Cuenta
+                </h2>
+                <p class="mt-2 text-sm text-purple-100">
+                    Únete a FidelityPoints y comienza a ganar puntos
+                </p>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-xl p-8" x-data="{ showPassword: false, showPasswordConfirmation: false }">
+            <form method="POST" action="/register" class="space-y-6">
+                <input type="hidden" name="_token" value="mY0kjWBwNsdNpty1fZdtifGDeNVaWwqaFRQnqvCi">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Nombres -->
+                    <div>
+                        <label for="nombres" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-user text-gray-400 mr-2"></i>
+                            Nombres *
+                        </label>
+                        <input 
+                            id="nombres" 
+                            name="nombres" 
+                            type="text" 
+                            autocomplete="given-name"
+                            required 
+                            class="form-input appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                            placeholder="Juan"
+                            value=""
+                        >
+                                            </div>
+
+                    <!-- Apellido Paterno -->
+                    <div>
+                        <label for="apellido_paterno" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-user text-gray-400 mr-2"></i>
+                            Apellido Paterno *
+                        </label>
+                        <input 
+                            id="apellido_paterno" 
+                            name="apellido_paterno" 
+                            type="text" 
+                            autocomplete="family-name"
+                            required 
+                            class="form-input appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                            placeholder="Pérez"
+                            value=""
+                        >
+                                            </div>
+
+                    <!-- Apellido Materno -->
+                    <div>
+                        <label for="apellido_materno" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-user text-gray-400 mr-2"></i>
+                            Apellido Materno
+                        </label>
+                        <input 
+                            id="apellido_materno" 
+                            name="apellido_materno" 
+                            type="text" 
+                            class="form-input appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                            placeholder="García"
+                            value=""
+                        >
+                                            </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-envelope text-gray-400 mr-2"></i>
+                            Correo Electrónico *
+                        </label>
+                        <input 
+                            id="email" 
+                            name="email" 
+                            type="email" 
+                            autocomplete="email"
+                            required 
+                            class="form-input appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                            placeholder="juan@email.com"
+                            value=""
+                        >
+                                            </div>
+
+                    <!-- Teléfono -->
+                    <div>
+                        <label for="telefono" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-phone text-gray-400 mr-2"></i>
+                            Teléfono
+                        </label>
+                        <input 
+                            id="telefono" 
+                            name="telefono" 
+                            type="tel" 
+                            autocomplete="tel"
+                            class="form-input appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                            placeholder="+1 234 567 8900"
+                            value=""
+                        >
+                                            </div>
+
+                    <!-- Fecha de Nacimiento -->
+                    <div>
+                        <label for="fecha_nacimiento" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-calendar text-gray-400 mr-2"></i>
+                            Fecha de Nacimiento
+                        </label>
+                        <input 
+                            id="fecha_nacimiento" 
+                            name="fecha_nacimiento" 
+                            type="date" 
+                            autocomplete="bday"
+                            class="form-input appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                            value=""
+                        >
+                                            </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Password -->
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-lock text-gray-400 mr-2"></i>
+                            Contraseña *
+                        </label>
+                        <div class="relative">
+                            <input 
+                                id="password" 
+                                name="password" 
+                                :type="showPassword ? 'text' : 'password'"
+                                autocomplete="new-password"
+                                required 
+                                class="form-input appearance-none relative block w-full px-3 py-3 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                                placeholder="Mínimo 8 caracteres"
+                            >
+                            <button 
+                                type="button" 
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                @click="showPassword = !showPassword"
+                            >
+                                <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'" class="text-gray-400 hover:text-gray-600"></i>
+                            </button>
+                        </div>
+                                            </div>
+
+                    <!-- Password Confirmation -->
+                    <div>
+                        <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-lock text-gray-400 mr-2"></i>
+                            Confirmar Contraseña *
+                        </label>
+                        <div class="relative">
+                            <input 
+                                id="password_confirmation" 
+                                name="password_confirmation" 
+                                :type="showPasswordConfirmation ? 'text' : 'password'"
+                                autocomplete="new-password"
+                                required 
+                                class="form-input appearance-none relative block w-full px-3 py-3 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                                placeholder="Confirma tu contraseña"
+                            >
+                            <button 
+                                type="button" 
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                @click="showPasswordConfirmation = !showPasswordConfirmation"
+                            >
+                                <i :class="showPasswordConfirmation ? 'fas fa-eye-slash' : 'fas fa-eye'" class="text-gray-400 hover:text-gray-600"></i>
+                            </button>
+                        </div>
+                                            </div>
+                </div>
+
+                <!-- Terms and Conditions -->
+                <div class="flex items-center">
+                    <input 
+                        id="terms" 
+                        name="terms" 
+                        type="checkbox" 
+                        required
+                        class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                    >
+                    <label for="terms" class="ml-2 block text-sm text-gray-700">
+                        Acepto los 
+                        <a href="#" class="text-purple-600 hover:text-purple-500 font-medium">términos y condiciones</a> 
+                        y la 
+                        <a href="#" class="text-purple-600 hover:text-purple-500 font-medium">política de privacidad</a>
+                    </label>
+                </div>
+
+                <!-- Submit Button -->
+                <div>
+                    <button 
+                        type="submit" 
+                        class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors duration-200"
+                    >
+                        <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                            <i class="fas fa-user-plus text-purple-300 group-hover:text-purple-200"></i>
+                        </span>
+                        Crear Cuenta
+                    </button>
+                </div>
+
+                <!-- Login Link -->
+                <div class="text-center">
+                    <p class="text-sm text-gray-600">
+                        ¿Ya tienes una cuenta?
+                        <a href="/login" class="font-medium text-purple-600 hover:text-purple-500">
+                            Inicia sesión aquí
+                        </a>
+                    </p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Benefits -->
+        <div class="bg-white bg-opacity-20 rounded-lg p-6 text-white">
+            <h3 class="font-semibold mb-4 text-center">
+                <i class="fas fa-gift mr-2"></i>
+                ¿Por qué unirse a FidelityPoints?
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div class="text-center">
+                    <i class="fas fa-coins text-yellow-300 text-xl mb-2"></i>
+                    <p><strong>Gana Puntos</strong><br>1 punto por cada peso gastado</p>
+                </div>
+                <div class="text-center">
+                    <i class="fas fa-ticket-alt text-green-300 text-xl mb-2"></i>
+                    <p><strong>Cupones Exclusivos</strong><br>Descuentos especiales</p>
+                </div>
+                <div class="text-center">
+                    <i class="fas fa-trophy text-orange-300 text-xl mb-2"></i>
+                    <p><strong>Niveles VIP</strong><br>Beneficios premium</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back to Home -->
+        <div class="text-center">
+            <a href="/" class="inline-flex items-center text-white hover:text-purple-200 transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Volver al Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    </body>
+</html>

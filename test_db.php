@@ -1,0 +1,1 @@
+<?php try { \ = new PDO('pgsql:host=localhost;port=5432;dbname=postgres', 'appwebuser', 'appwebpass'); \->exec('SET search_path TO appweb, public'); echo 'BD OK - '; \ = \->query('SELECT COUNT(*) FROM usuarios'); echo 'Usuarios: ' . \->fetchColumn() . PHP_EOL; } catch (Exception \) { echo 'Error: ' . \->getMessage() . PHP_EOL; }

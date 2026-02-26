@@ -15,10 +15,11 @@ class Direccion extends Model
         'usuario_id',
         'calle',
         'numero',
-        'colonia',
+        'codigo_postal_id',
         'codigo_postal',
         'estado',
-        'ciudad',
+        'municipio',
+        'colonia',
         'pais',
         'referencias',
         'tipo',
@@ -39,6 +40,11 @@ class Direccion extends Model
         return $this->belongsTo(Usuario::class);
     }
 
+    public function codigoPostal()
+    {
+        return $this->belongsTo(CodigoPostal::class);
+    }
+
     public function actualizadoPor()
     {
         return $this->belongsTo(Usuario::class, 'actualizado_por');
@@ -47,7 +53,7 @@ class Direccion extends Model
     // Accessors
     public function getDireccionCompletaAttribute()
     {
-        return "{$this->calle} {$this->numero}, {$this->colonia}, {$this->ciudad}, {$this->estado}, {$this->codigo_postal}, {$this->pais}";
+        return "{$this->calle} {$this->numero}, {$this->colonia}, {$this->municipio}, {$this->estado}, {$this->codigo_postal}, {$this->pais}";
     }
 
     // Scopes

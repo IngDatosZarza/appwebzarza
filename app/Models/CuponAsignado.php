@@ -18,6 +18,8 @@ class CuponAsignado extends Model
         'estado',
         'codigo_qr',
         'asignado_por',
+        'fecha_uso',
+        'validado_por',
     ];
 
     // Relaciones
@@ -34,6 +36,11 @@ class CuponAsignado extends Model
     public function asignadoPor()
     {
         return $this->belongsTo(Usuario::class, 'asignado_por');
+    }
+
+    public function validadoPor()
+    {
+        return $this->belongsTo(Usuario::class, 'validado_por');
     }
 
     public function redencion()
@@ -54,17 +61,27 @@ class CuponAsignado extends Model
 
     public function scopePendientes($query)
     {
-        return $query->where('estado', 'pendiente');
+        return $query->where('estado', 'asignado');
+    }
+
+    public function scopeUsados($query)
+    {
+        return $query->where('estado', 'usado');
     }
 
     public function scopeRedimidos($query)
     {
-        return $query->where('estado', 'redimido');
+        return $query->where('estado', 'usado'); // Alias para compatibilidad
     }
 
     public function scopeVencidos($query)
     {
         return $query->where('estado', 'vencido');
+    }
+
+    public function scopeBloqueados($query)
+    {
+        return $query->where('estado', 'bloqueado');
     }
 
     // Eventos del modelo
@@ -91,20 +108,39 @@ class CuponAsignado extends Model
 
     public function puedeSerRedimido()
     {
-        return $this->estado === 'pendiente' && 
+        return $this->estado === 'asignado' && 
                $this->cupon && 
                $this->cupon->estaDisponible();
     }
 
+    public function marcarComoUsado($validadoPor = null)
+    {
+        $this->estado = 'usado';
+        $this->fecha_uso = now();
+        $this->validado_por = $validadoPor;
+        $this->save();
+    }
+
     public function marcarComoRedimido()
     {
-        $this->estado = 'redimido';
-        $this->save();
+        // Alias para compatibilidad
+        $this->marcarComoUsado();
     }
 
     public function marcarComoVencido()
     {
         $this->estado = 'vencido';
         $this->save();
+    }
+
+    /**
+     * Generar código QR combinado con el código del cupón
+     */
+    public function generarCodigoQRCompleto()
+    {
+        if ($this->cupon && $this->cupon->codigo) {
+            return $this->cupon->codigo . '-' . substr($this->codigo_qr, 2); // Quitar "QR" del inicio
+        }
+        return $this->codigo_qr;
     }
 }

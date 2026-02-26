@@ -14,6 +14,7 @@ class Cupon extends Model
 
     protected $fillable = [
         'nombre',
+        'codigo',
         'descripcion',
         'puntos_requeridos',
         'fecha_inicio',
@@ -83,5 +84,25 @@ class Cupon extends Model
         return $this->estaDisponible() && 
                $usuario->puntos && 
                $usuario->puntos->saldo >= $this->puntos_requeridos;
+    }
+
+    /**
+     * Generar código único para el cupón si no tiene
+     */
+    public static function generarCodigo($nombre)
+    {
+        // Limpiar nombre y convertir a mayúsculas
+        $base = strtoupper(preg_replace('/[^A-Z0-9]/', '', $nombre));
+        $base = substr($base, 0, 12); // Máximo 12 caracteres del nombre
+        
+        // Generar código único
+        $codigo = $base . rand(10, 99);
+        
+        // Verificar que sea único
+        while (self::where('codigo', $codigo)->exists()) {
+            $codigo = $base . rand(10, 99);
+        }
+        
+        return $codigo;
     }
 }

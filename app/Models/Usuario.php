@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class Usuario extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $table = 'usuarios';
 
@@ -22,11 +23,15 @@ class Usuario extends Authenticatable
         'apellido_paterno',
         'apellido_materno',
         'email',
+        'email_verified_at',
         'password',
         'telefono',
         'fecha_nacimiento',
+        'rfc',
         'genero',
         'rol',
+        'club_zarza',
+        'oppen_customer_id',
     ];
 
     /**
@@ -48,7 +53,9 @@ class Usuario extends Authenticatable
     {
         return [
             'fecha_nacimiento' => 'date',
+            'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'club_zarza' => 'boolean',
         ];
     }
 
@@ -103,5 +110,34 @@ class Usuario extends Authenticatable
     public function getNombreCompletoAttribute()
     {
         return trim("{$this->nombres} {$this->apellido_paterno} {$this->apellido_materno}");
+    }
+
+    /**
+     * Verificar si el usuario es mayor de edad
+     */
+    public function isMayorDeEdad(): bool
+    {
+        if (!$this->fecha_nacimiento) {
+            return false;
+        }
+        return $this->fecha_nacimiento->diffInYears(now()) >= 18;
+    }
+
+    /**
+     * Verificar si el email está verificado
+     */
+    public function hasVerifiedEmail(): bool
+    {
+        return !is_null($this->email_verified_at);
+    }
+
+    /**
+     * Marcar el email como verificado
+     */
+    public function markEmailAsVerified(): bool
+    {
+        return $this->forceFill([
+            'email_verified_at' => $this->freshTimestamp(),
+        ])->save();
     }
 }
