@@ -1,7 +1,7 @@
-# 📦 GUÍA DE MIGRACIÓN - ZarzaPoints a Servidor Local
+# 📦 GUÍA DE MIGRACIÓN - La Zarza Contigo a Servidor Local
 
 ## 🎯 Objetivo
-Migrar el sistema ZarzaPoints desde tu ambiente de desarrollo (XAMPP) a un servidor de prueba local.
+Migrar el sistema La Zarza Contigo desde tu ambiente de desarrollo (XAMPP) a un servidor de prueba local.
 
 ---
 
@@ -59,7 +59,7 @@ cd C:\xampp\htdocs\appwebzarza
 
 # Comprimir proyecto (sin node_modules, vendor, etc.)
 # Opción 1: Con 7zip (si lo tienes instalado)
-7z a -xr!node_modules -xr!vendor -xr!.git -xr!storage\logs zarzapoints_v1.0.zip .
+7z a -xr!node_modules -xr!vendor -xr!.git -xr!storage\logs La Zarza Contigo_v1.0.zip .
 
 # Opción 2: Manualmente
 # Copia la carpeta completa EXCEPTO:
@@ -163,8 +163,8 @@ cd C:\inetpub\wwwroot\  # (Windows IIS)
 cd C:\xampp\htdocs\  # (Windows XAMPP)
 
 # Extraer el proyecto
-unzip zarzapoints_v1.0.zip -d zarzapoints
-cd zarzapoints
+unzip La Zarza Contigo_v1.0.zip -d La Zarza Contigo
+cd La Zarza Contigo
 
 # Dar permisos (Linux)
 sudo chown -R www-data:www-data storage bootstrap/cache
@@ -197,7 +197,7 @@ notepad .env  # (Windows)
 **Configuración del `.env`:**
 
 ```env
-APP_NAME="ZarzaPoints"
+APP_NAME="La Zarza Contigo"
 APP_ENV=local
 APP_KEY=base64:TU_KEY_AQUI  # Se genera con: php artisan key:generate
 APP_DEBUG=true
@@ -293,13 +293,13 @@ SELECT COUNT(*) FROM cupones;
 
 ### Opción A: Nginx (Recomendado para Producción)
 
-Crear archivo: `/etc/nginx/sites-available/zarzapoints`
+Crear archivo: `/etc/nginx/sites-available/La Zarza Contigo`
 
 ```nginx
 server {
     listen 80;
     server_name localhost;  # o tu dominio
-    root /var/www/zarzapoints/public;
+    root /var/www/La Zarza Contigo/public;
 
     add_header X-Frame-Options "SAMEORIGIN";
     add_header X-Content-Type-Options "nosniff";
@@ -331,7 +331,7 @@ server {
 
 ```bash
 # Activar sitio
-sudo ln -s /etc/nginx/sites-available/zarzapoints /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/La Zarza Contigo /etc/nginx/sites-enabled/
 
 # Probar configuración
 sudo nginx -t
@@ -342,27 +342,27 @@ sudo systemctl restart nginx
 
 ### Opción B: Apache (.htaccess ya incluido)
 
-Crear archivo: `/etc/apache2/sites-available/zarzapoints.conf`
+Crear archivo: `/etc/apache2/sites-available/La Zarza Contigo.conf`
 
 ```apache
 <VirtualHost *:80>
     ServerName localhost
-    DocumentRoot /var/www/zarzapoints/public
+    DocumentRoot /var/www/La Zarza Contigo/public
 
-    <Directory /var/www/zarzapoints/public>
+    <Directory /var/www/La Zarza Contigo/public>
         AllowOverride All
         Require all granted
     </Directory>
 
-    ErrorLog ${APACHE_LOG_DIR}/zarzapoints_error.log
-    CustomLog ${APACHE_LOG_DIR}/zarzapoints_access.log combined
+    ErrorLog ${APACHE_LOG_DIR}/La Zarza Contigo_error.log
+    CustomLog ${APACHE_LOG_DIR}/La Zarza Contigo_access.log combined
 </VirtualHost>
 ```
 
 ```bash
 # Activar módulos necesarios
 sudo a2enmod rewrite
-sudo a2ensite zarzapoints
+sudo a2ensite La Zarza Contigo
 
 # Reiniciar Apache
 sudo systemctl restart apache2
@@ -371,7 +371,7 @@ sudo systemctl restart apache2
 ### Opción C: PHP Built-in Server (Solo Desarrollo)
 
 ```bash
-cd /var/www/zarzapoints
+cd /var/www/La Zarza Contigo
 php artisan serve --host=0.0.0.0 --port=8000
 ```
 
@@ -477,8 +477,8 @@ sudo chown -R www-data:www-data storage bootstrap/cache
 sudo chmod -R 775 storage bootstrap/cache
 
 # Resto del proyecto solo lectura
-sudo chown -R www-data:www-data /var/www/zarzapoints
-sudo chmod -R 755 /var/www/zarzapoints
+sudo chown -R www-data:www-data /var/www/La Zarza Contigo
+sudo chmod -R 755 /var/www/La Zarza Contigo
 ```
 
 ---
@@ -559,7 +559,7 @@ Antes de dar por terminada la migración:
 
 ## 🎉 ¡MIGRACIÓN COMPLETADA!
 
-Tu sistema ZarzaPoints ahora está funcionando en el servidor de prueba.
+Tu sistema La Zarza Contigo ahora está funcionando en el servidor de prueba.
 
 **URLs de Acceso:**
 - Frontend: `http://localhost:8000` (o tu IP/dominio)
@@ -584,5 +584,5 @@ Si encuentras algún problema:
 ---
 
 **Fecha:** 2025-10-15  
-**Sistema:** ZarzaPoints v2.1  
+**Sistema:** La Zarza Contigo v2.1  
 **Guía:** Migración a Servidor de Prueba

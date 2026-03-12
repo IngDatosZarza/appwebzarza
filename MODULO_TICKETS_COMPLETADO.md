@@ -1,4 +1,4 @@
-# 🎫 Módulo de Tickets - Sistema ZarzaPoints
+# 🎫 Módulo de Tickets - Sistema La Zarza Contigo
 
 ## 📝 Descripción
 Módulo completo para el registro de tickets de compra donde los clientes pueden registrar sus números de ticket y ganar **100 puntos fijos** por cada ticket registrado, independientemente del monto de la compra.
@@ -116,7 +116,7 @@ Route::middleware('custom.auth')->group(function () {
 - `GET /tickets/calculate-points` - Obtener puntos a ganar (siempre 100)
 
 ## 🎨 Diseño de UI
-- **Colores consistentes** con ZarzaPoints
+- **Colores consistentes** con La Zarza Contigo
 - **Animaciones suaves** y transiciones
 - **Responsive design** para móviles
 - **Iconografía clara** con Font Awesome
@@ -125,7 +125,7 @@ Route::middleware('custom.auth')->group(function () {
 ## 🚀 Cómo Usar
 
 ### Para Clientes:
-1. **Iniciar sesión** en ZarzaPoints
+1. **Iniciar sesión** en La Zarza Contigo
 2. **Ir a "Tickets"** en el menú
 3. **Hacer clic en "Registrar Ticket"**
 4. **Llenar el formulario**:

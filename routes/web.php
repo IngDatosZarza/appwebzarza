@@ -3,6 +3,8 @@
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\TransactionController;
 use App\Http\Controllers\Web\NotificationController;
+use App\Http\Controllers\Web\BranchesController;
+use App\Http\Controllers\Web\CatalogController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 
@@ -19,6 +21,12 @@ use Illuminate\Support\Facades\Session;
 
 // Página principal
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+// Sucursales (público)
+Route::get('/sucursales', [BranchesController::class, 'index'])->name('branches.index');
+
+// Catálogo de productos (público)
+Route::get('/catalogo', [CatalogController::class, 'index'])->name('catalog.index');
 
 // Guía de acceso (pública)
 Route::get('/guia', function () {

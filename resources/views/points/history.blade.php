@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Historial de Puntos | ZarzaPoints')
+@section('title', 'Historial de Puntos | La Zarza Contigo')
 
 @section('content')
 <div class="space-y-8">
@@ -12,7 +12,7 @@
                 </span>
                 Historial de Puntos
             </h1>
-            <p class="text-gray-600 mt-2">Revisa todos los movimientos de tus puntos ZarzaPoints.</p>
+            <p class="text-gray-600 mt-2">Revisa todos los movimientos de tus puntos La Zarza Contigo.</p>
         </div>
         <div class="flex flex-col sm:flex-row gap-3">
             <a href="{{ route('purchase.form') }}" class="btn-primary text-white px-5 py-3 rounded-lg shadow-sm inline-flex items-center gap-2">

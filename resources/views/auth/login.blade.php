@@ -21,7 +21,7 @@ if ($helperPath && file_exists($helperPath)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión - ZarzaPoints</title>
+    <title>Iniciar Sesión - La Zarza Contigo</title>
     <link rel="icon" type="image/png" href="/logozarza.png">
     <!-- Tailwind CSS CDN - Solo para desarrollo, cambiar a build para producción -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -44,13 +44,13 @@ if ($helperPath && file_exists($helperPath)) {
         <div>
             <div class="text-center">
                 <div class="mx-auto mb-6">
-                    <img src="/logoZarza.webp" alt="ZarzaPoints" class="h-20 w-auto mx-auto mb-4 drop-shadow-lg">
+                    <img src="/logoZarza.webp" alt="La Zarza Contigo" class="h-20 w-auto mx-auto mb-4 drop-shadow-lg">
                 </div>
                 <h2 class="text-3xl font-extrabold text-white">
                     Iniciar Sesión
                 </h2>
                 <p class="mt-2 text-sm text-pink-100">
-                    Accede a tu cuenta de ZarzaPoints
+                    Accede a tu cuenta de La Zarza Contigo
                 </p>
             </div>
         </div>
@@ -175,7 +175,7 @@ if ($helperPath && file_exists($helperPath)) {
         <div class="text-center">
             <a href="/" class="inline-flex items-center text-white hover:text-pink-200 transition-colors">
                 <i class="fas fa-arrow-left mr-2"></i>
-                Volver al Dashboard
+                Volver al Inicio
             </a>
         </div>
     </div>

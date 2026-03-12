@@ -7,13 +7,15 @@ use App\Models\Usuario;
 use App\Models\Cupon;
 use App\Models\CuponAsignado;
 use App\Models\Compra;
+use App\Models\TransaccionPuntos;
+use App\Models\Puntos;
+use App\Models\Auditoria;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
-use PDO;
 
 class DashboardController extends Controller
 {
@@ -57,56 +59,36 @@ class DashboardController extends Controller
             $transaccionesRecientes = [];
             
             try {
-                // Conectar a base de datos
-                $pdo = new PDO('pgsql:host=localhost;port=5432;dbname=postgres', 'appwebuser', 'appwebpass');
-                $pdo->exec('SET search_path TO appweb, public');
-                
                 $userId = Session::get('user_id');
                 
-                // Actualizar puntos actuales desde BD
-                $stmt = $pdo->prepare("SELECT saldo FROM puntos WHERE usuario_id = ?");
-                $stmt->execute([$userId]);
-                $puntos = $stmt->fetch(PDO::FETCH_ASSOC);
-                $userData['puntos'] = $puntos['saldo'] ?? 0;
+                // Actualizar puntos actuales desde BD usando Eloquent
+                $puntos = Puntos::where('usuario_id', $userId)->first();
+                $userData['puntos'] = $puntos ? $puntos->saldo : 0;
                 
                 // Obtener compras del usuario
-                $stmt = $pdo->prepare("
-                    SELECT COUNT(*) as total_compras, COALESCE(SUM(monto), 0) as total_gastado 
-                    FROM compras WHERE usuario_id = ?
-                ");
-                $stmt->execute([$userId]);
-                $comprasData = $stmt->fetch(PDO::FETCH_ASSOC);
+                $comprasData = Compra::where('usuario_id', $userId)
+                    ->selectRaw('COUNT(*) as total_compras, COALESCE(SUM(monto), 0) as total_gastado')
+                    ->first()
+                    ->toArray();
                 
                 // Obtener cupones disponibles
-                $stmt = $pdo->query("
-                    SELECT COUNT(*) as cupones_disponibles 
-                    FROM cupones 
-                    WHERE activo = true 
-                    AND fecha_inicio <= CURRENT_DATE 
-                    AND fecha_fin >= CURRENT_DATE
-                ");
-                $cuponesDisponibles = $stmt->fetchColumn();
+                $cuponesDisponibles = Cupon::where('activo', true)
+                    ->whereDate('fecha_inicio', '<=', now())
+                    ->whereDate('fecha_fin', '>=', now())
+                    ->count();
                 
                 // Obtener cupones del usuario
-                $stmt = $pdo->prepare("
-                    SELECT COUNT(*) as mis_cupones 
-                    FROM cupones_asignados ca
-                    JOIN cupones c ON ca.cupon_id = c.id
-                    WHERE ca.usuario_id = ? AND ca.estado = 'asignado'
-                ");
-                $stmt->execute([$userId]);
-                $misCupones = $stmt->fetchColumn();
+                $misCupones = CuponAsignado::join('cupones', 'cupones_asignados.cupon_id', '=', 'cupones.id')
+                    ->where('cupones_asignados.usuario_id', $userId)
+                    ->where('cupones_asignados.estado', 'asignado')
+                    ->count();
                 
                 // Obtener transacciones recientes
-                $stmt = $pdo->prepare("
-                    SELECT tipo, puntos, descripcion, created_at
-                    FROM transacciones_puntos 
-                    WHERE usuario_id = ? 
-                    ORDER BY created_at DESC 
-                    LIMIT 5
-                ");
-                $stmt->execute([$userId]);
-                $transaccionesRecientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $transaccionesRecientes = TransaccionPuntos::where('usuario_id', $userId)
+                    ->orderBy('created_at', 'desc')
+                    ->limit(5)
+                    ->get(['tipo', 'puntos', 'descripcion', 'created_at'])
+                    ->toArray();
                 
             } catch (\Exception $dbError) {
                 // Si hay error de BD, usar valores por defecto
@@ -492,25 +474,18 @@ class DashboardController extends Controller
         }
 
         try {
-            // Conectar a base de datos para obtener datos actualizados del usuario
-            $pdo = new PDO('pgsql:host=localhost;port=5432;dbname=postgres', 'appwebuser', 'appwebpass');
-            $pdo->exec('SET search_path TO appweb, public');
-            
             $userId = Session::get('user_id');
             
-            // Obtener datos del usuario
-            $stmt = $pdo->prepare("
-                SELECT u.*, p.saldo as puntos_saldo 
-                FROM usuarios u 
-                LEFT JOIN puntos p ON u.id = p.usuario_id 
-                WHERE u.id = ?
-            ");
-            $stmt->execute([$userId]);
-            $userData = $stmt->fetch(PDO::FETCH_ASSOC);
+            // Obtener datos del usuario usando Eloquent con relaciones
+            $usuario = Usuario::with('puntos')->find($userId);
             
-            if (!$userData) {
+            if (!$usuario) {
                 return redirect()->route('login')->with('error', 'Usuario no encontrado.');
             }
+            
+            // Preparar datos para la vista
+            $userData = $usuario->toArray();
+            $userData['puntos_saldo'] = $usuario->puntos ? $usuario->puntos->saldo : 0;
             
             return view('profile.show', ['user' => $userData]);
             
@@ -545,18 +520,21 @@ class DashboardController extends Controller
         ]);
 
         try {
-            $pdo = new PDO('pgsql:host=localhost;port=5432;dbname=postgres', 'appwebuser', 'appwebpass');
-            $pdo->exec('SET search_path TO appweb, public');
-            $pdo->beginTransaction();
-            
             $userId = Session::get('user_id');
             
             // Verificar si el email ya existe (para otro usuario)
-            $stmt = $pdo->prepare("SELECT id FROM usuarios WHERE email = ? AND id != ?");
-            $stmt->execute([$request->email, $userId]);
-            if ($stmt->fetchColumn()) {
+            $emailExists = Usuario::where('email', $request->email)
+                ->where('id', '!=', $userId)
+                ->exists();
+                
+            if ($emailExists) {
                 return back()->withErrors(['email' => 'Este email ya está en uso por otro usuario.'])->withInput();
             }
+            
+            DB::beginTransaction();
+            
+            // Obtener usuario
+            $usuario = Usuario::findOrFail($userId);
             
             // Preparar datos para actualizar
             $updateData = [
@@ -565,8 +543,7 @@ class DashboardController extends Controller
                 'apellido_materno' => $request->apellido_materno,
                 'email' => $request->email,
                 'telefono' => $request->telefono,
-                'fecha_nacimiento' => $request->fecha_nacimiento,
-                'updated_at' => date('Y-m-d H:i:s')
+                'fecha_nacimiento' => $request->fecha_nacimiento
             ];
             
             // Si se proporcionó una nueva contraseña, incluirla
@@ -574,46 +551,32 @@ class DashboardController extends Controller
                 $updateData['password'] = Hash::make($request->password);
             }
             
-            // Construir query dinámicamente
-            $setClause = [];
-            $values = [];
-            foreach ($updateData as $key => $value) {
-                $setClause[] = "$key = ?";
-                $values[] = $value;
-            }
-            $values[] = $userId; // Para el WHERE
-            
-            $sql = "UPDATE usuarios SET " . implode(', ', $setClause) . " WHERE id = ?";
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute($values);
+            // Actualizar usuario
+            $usuario->update($updateData);
             
             // Registrar en auditoría
-            $auditStmt = $pdo->prepare("
-                INSERT INTO auditoria (tabla, registro_id, accion, usuario_id, cambios, fecha)
-                VALUES ('usuarios', ?, 'update', ?, ?, NOW())
-            ");
-            $auditStmt->execute([
-                $userId,
-                $userId,
-                json_encode([
+            Auditoria::create([
+                'tabla' => 'usuarios',
+                'registro_id' => $userId,
+                'accion' => 'update',
+                'usuario_id' => $userId,
+                'cambios' => json_encode([
                     'campo_actualizado' => 'perfil_usuario',
                     'datos_modificados' => array_keys($updateData)
                 ])
             ]);
             
-            $pdo->commit();
+            DB::commit();
             
-            // Actualizar datos en la sesión
+            // Actualizar sesión si cambió el email o nombre
+            Session::put('user_email', $request->email);
             Session::put('user_nombre', $request->nombres);
             Session::put('user_apellido', $request->apellido_paterno);
-            Session::put('user_email', $request->email);
             
-            return back()->with('success', '✅ Perfil actualizado exitosamente');
+            return redirect()->route('profile.show')->with('success', '✅ Perfil actualizado exitosamente.');
 
         } catch (\Exception $e) {
-            if (isset($pdo)) {
-                $pdo->rollBack();
-            }
+            DB::rollBack();
             
             Log::error('Error al actualizar perfil de usuario', [
                 'user_id' => Session::get('user_id'),
@@ -697,9 +660,6 @@ class DashboardController extends Controller
         }
 
         try {
-            $pdo = new PDO('pgsql:host=localhost;port=5432;dbname=postgres', 'appwebuser', 'appwebpass');
-            $pdo->exec('SET search_path TO appweb, public');
-
             // Aplicar los mismos filtros que en la vista
             $filtros = [
                 'tipo' => $request->get('tipo', ''),
@@ -708,55 +668,43 @@ class DashboardController extends Controller
                 'fecha_hasta' => $request->get('fecha_hasta', ''),
             ];
 
-            $whereConditions = [];
-            $params = [];
+            // Construir query usando Query Builder
+            $query = TransaccionPuntos::select(
+                    'transacciones_puntos.id',
+                    DB::raw("usuarios.nombres || ' ' || usuarios.apellido_paterno as usuario"),
+                    'usuarios.email',
+                    'transacciones_puntos.tipo',
+                    'transacciones_puntos.puntos',
+                    'transacciones_puntos.descripcion',
+                    DB::raw("ur.nombres || ' ' || ur.apellido_paterno as registrado_por"),
+                    DB::raw('transacciones_puntos.created_at::date as fecha'),
+                    DB::raw('transacciones_puntos.created_at::time as hora')
+                )
+                ->leftJoin('usuarios', 'transacciones_puntos.usuario_id', '=', 'usuarios.id')
+                ->leftJoin('usuarios as ur', 'transacciones_puntos.registrado_por', '=', 'ur.id');
 
             if (!empty($filtros['tipo'])) {
-                $whereConditions[] = "tp.tipo = ?";
-                $params[] = $filtros['tipo'];
+                $query->where('transacciones_puntos.tipo', $filtros['tipo']);
             }
 
             if (!empty($filtros['usuario'])) {
-                $whereConditions[] = "(u.nombres ILIKE ? OR u.apellido_paterno ILIKE ? OR u.email ILIKE ?)";
                 $searchPattern = '%' . $filtros['usuario'] . '%';
-                $params[] = $searchPattern;
-                $params[] = $searchPattern;
-                $params[] = $searchPattern;
+                $query->where(function($q) use ($searchPattern) {
+                    $q->where('usuarios.nombres', 'ILIKE', $searchPattern)
+                      ->orWhere('usuarios.apellido_paterno', 'ILIKE', $searchPattern)
+                      ->orWhere('usuarios.email', 'ILIKE', $searchPattern);
+                });
             }
 
             if (!empty($filtros['fecha_desde'])) {
-                $whereConditions[] = "tp.created_at >= ?";
-                $params[] = $filtros['fecha_desde'] . ' 00:00:00';
+                $query->where('transacciones_puntos.created_at', '>=', $filtros['fecha_desde'] . ' 00:00:00');
             }
 
             if (!empty($filtros['fecha_hasta'])) {
-                $whereConditions[] = "tp.created_at <= ?";
-                $params[] = $filtros['fecha_hasta'] . ' 23:59:59';
+                $query->where('transacciones_puntos.created_at', '<=', $filtros['fecha_hasta'] . ' 23:59:59');
             }
 
-            $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
-
-            $sql = "
-                SELECT 
-                    tp.id,
-                    u.nombres || ' ' || u.apellido_paterno as usuario,
-                    u.email,
-                    tp.tipo,
-                    tp.puntos,
-                    tp.descripcion,
-                    ur.nombres || ' ' || ur.apellido_paterno as registrado_por,
-                    tp.created_at::date as fecha,
-                    tp.created_at::time as hora
-                FROM transacciones_puntos tp
-                LEFT JOIN usuarios u ON tp.usuario_id = u.id
-                LEFT JOIN usuarios ur ON tp.registrado_por = ur.id
-                $whereClause
-                ORDER BY tp.created_at DESC
-            ";
-
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute($params);
-            $transacciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $transacciones = $query->orderBy('transacciones_puntos.created_at', 'desc')->get()->toArray();
 
             // Configurar headers para descarga CSV
             $filename = 'transacciones_puntos_' . date('Y-m-d_H-i-s') . '.csv';

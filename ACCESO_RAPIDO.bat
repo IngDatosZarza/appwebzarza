@@ -3,7 +3,7 @@ REM Script de Windows para verificar y acceder al sistema
 
 echo.
 echo ========================================
-echo   SISTEMA ZARZAPOINTS - ACCESO RAPIDO
+echo   SISTEMA La Zarza Contigo - ACCESO RAPIDO
 echo ========================================
 echo.
 

@@ -318,4 +318,4 @@ El sistema de popup de cupones está completamente implementado y listo para usa
 
 ---
 **Fecha de Implementación**: 2025-10-13
-**Sistema**: ZarzaPoints - Popup de Cupones con QR
+**Sistema**: La Zarza Contigo - Popup de Cupones con QR

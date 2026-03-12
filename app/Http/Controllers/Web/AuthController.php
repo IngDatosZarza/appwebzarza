@@ -4,12 +4,17 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Usuario;
+use App\Models\Direccion;
+use App\Models\Puntos;
+use App\Models\CodigoPostal;
+use App\Models\Auditoria;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -40,53 +45,42 @@ class AuthController extends Controller
         }
 
         try {
-            // Buscar usuario por email usando PDO directo
-            $pdo = new \PDO('pgsql:host=localhost;port=5432;dbname=postgres', 'appwebuser', 'appwebpass');
-            $pdo->exec('SET search_path TO appweb, public');
-            
-            $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE email = ?");
-            $stmt->execute([$request->email]);
-            $usuario = $stmt->fetch(\PDO::FETCH_ASSOC);
+            // Buscar usuario por email usando Eloquent
+            $usuario = Usuario::where('email', $request->email)->first();
 
-            if (!$usuario || !password_verify($request->password, $usuario['password'])) {
-                // Redirigir específicamente al login con mensaje de error
+            if (!$usuario || !Hash::check($request->password, $usuario->password)) {
                 return redirect()->route('login')->withErrors([
                     'email' => 'Las credenciales proporcionadas no coinciden con nuestros registros.'
                 ])->withInput()->with('error', '❌ Credenciales incorrectas. Por favor, verifica tu email y contraseña.');
             }
 
             // Actualizar marca de tiempo de actividad
-            $updateStmt = $pdo->prepare("UPDATE usuarios SET updated_at = NOW() WHERE id = ?");
-            $updateStmt->execute([$usuario['id']]);
+            $usuario->touch();
 
             // Regenerar la sesión para evitar fixation
             Session::regenerate();
 
-            // Autenticar al usuario en el guard de Laravel para compatibilidad con Auth::check()
-            $usuarioModel = Usuario::find($usuario['id']);
-            if ($usuarioModel) {
-                Auth::login($usuarioModel);
-            }
+            // Autenticar al usuario en el guard de Laravel
+            Auth::login($usuario);
 
-            // Crear sesión manual
+            // Crear sesión manual para compatibilidad
             Session::put('user_authenticated', true);
-            Session::put('user_id', $usuario['id']);
-            Session::put('user_email', $usuario['email']);
-            Session::put('user_nombre', $usuario['nombres']);
-            Session::put('user_apellido', $usuario['apellido_paterno']);
-            Session::put('user_rol', $usuario['rol']);
+            Session::put('user_id', $usuario->id);
+            Session::put('user_email', $usuario->email);
+            Session::put('user_nombre', $usuario->nombres);
+            Session::put('user_apellido', $usuario->apellido_paterno);
+            Session::put('user_rol', $usuario->rol);
 
-            // Obtener puntos del usuario
-            $puntosStmt = $pdo->prepare("SELECT saldo FROM puntos WHERE usuario_id = ?");
-            $puntosStmt->execute([$usuario['id']]);
-            $puntos = $puntosStmt->fetch(\PDO::FETCH_ASSOC);
-            Session::put('user_puntos', $puntos['saldo'] ?? 0);
+            // Obtener puntos del usuario usando relación Eloquent
+            $puntos = $usuario->puntos;
+            $saldoPuntos = $puntos ? $puntos->saldo : 0;
+            Session::put('user_puntos', $saldoPuntos);
 
             // Redirigir según el rol del usuario
-            if ($usuario['rol'] === 'admin') {
-                return redirect('/admin/points')->with('success', '✅ ¡Bienvenido al Panel de Administración, ' . $usuario['nombres'] . '!');
+            if ($usuario->rol === 'admin') {
+                return redirect('/admin/points')->with('success', '✅ ¡Bienvenido al Panel de Administración, ' . $usuario->nombres . '!');
             } else {
-                return redirect()->intended('/')->with('success', '✅ ¡Bienvenido de vuelta, ' . $usuario['nombres'] . '! Tienes ' . number_format($puntos['saldo'] ?? 0) . ' puntos disponibles.');
+                return redirect()->intended('/')->with('success', '✅ ¡Bienvenido de vuelta, ' . $usuario->nombres . '! Tienes ' . number_format($saldoPuntos) . ' puntos disponibles.');
             }
 
         } catch (\Exception $e) {
@@ -193,127 +187,95 @@ class AuthController extends Controller
         error_log("=== VALIDACIÓN EXITOSA ===");
 
         try {
-            $pdo = new \PDO('pgsql:host=localhost;port=5432;dbname=postgres', 'appwebuser', 'appwebpass');
-            $pdo->exec('SET search_path TO appweb, public');
-            
             // VALIDACIÓN CON SISTEMA OPPEN
-            // Verificar si el cliente ya existe en Oppen (simulación - implementar según API de Oppen)
             $clienteExisteEnOppen = $this->verificarClienteEnOppen($request->email, $request->telefono, $request->rfc);
             
             if ($clienteExisteEnOppen) {
-                // El cliente existe en Oppen
                 if ($clienteExisteEnOppen['tiene_club_zarza']) {
-                    // Ya está registrado en Club Zarza
                     return back()->withErrors([
                         'email' => 'Ya estás registrado en Club Zarza. Por favor, inicia sesión.'
                     ])->withInput()->with('error', '❌ Este cliente ya pertenece a Club Zarza.');
                 }
-                
-                // Cliente existe en Oppen pero solo para facturación - vamos a actualizarlo
-                return $this->actualizarClienteOppen($request, $clienteExisteEnOppen['oppen_id'], $pdo);
+                return $this->actualizarClienteOppen($request, $clienteExisteEnOppen['oppen_id']);
             }
             
-            // Cliente nuevo - crear en ambos sistemas
-            $pdo->beginTransaction();
+            // Cliente nuevo - crear en ambos sistemas usando transacción
+            DB::beginTransaction();
 
             // Crear usuario
-            $stmt = $pdo->prepare("
-                INSERT INTO usuarios (
-                    nombres, apellido_paterno, apellido_materno, 
-                    email, telefono, fecha_nacimiento, rfc,
-                    password, rol, club_zarza, created_at, updated_at
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'cliente', true, NOW(), NOW())
-                RETURNING id
-            ");
-            
-            $stmt->execute([
-                $request->nombres,
-                $request->apellido_paterno,
-                $request->apellido_materno,
-                $request->email,
-                $request->telefono,
-                $request->fecha_nacimiento,
-                strtoupper($request->rfc),
-                Hash::make($request->password)
+            $usuario = Usuario::create([
+                'nombres' => $request->nombres,
+                'apellido_paterno' => $request->apellido_paterno,
+                'apellido_materno' => $request->apellido_materno,
+                'email' => $request->email,
+                'telefono' => $request->telefono,
+                'fecha_nacimiento' => $request->fecha_nacimiento,
+                'rfc' => strtoupper($request->rfc),
+                'password' => Hash::make($request->password),
+                'rol' => 'cliente',
+                'club_zarza' => true
             ]);
-            
-            $userId = $stmt->fetchColumn();
 
             // Obtener datos del código postal
-            $cpStmt = $pdo->prepare("SELECT * FROM codigos_postales WHERE id = ?");
-            $cpStmt->execute([$request->codigo_postal_id]);
-            $cpData = $cpStmt->fetch(\PDO::FETCH_ASSOC);
+            $cpData = CodigoPostal::find($request->codigo_postal_id);
 
             // Crear dirección
-            $dirStmt = $pdo->prepare("
-                INSERT INTO direcciones (
-                    usuario_id, calle, numero, 
-                    codigo_postal_id, codigo_postal, estado, municipio, colonia,
-                    pais, principal, created_at, updated_at
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'México', true, NOW(), NOW())
-            ");
-            $dirStmt->execute([
-                $userId,
-                $request->calle,
-                $request->numero,
-                $request->codigo_postal_id,
-                $cpData['codigo_postal'],
-                $cpData['estado'],
-                $cpData['municipio'],
-                $request->colonia
+            Direccion::create([
+                'usuario_id' => $usuario->id,
+                'calle' => $request->calle,
+                'numero' => $request->numero,
+                'codigo_postal_id' => $request->codigo_postal_id,
+                'codigo_postal' => $cpData->codigo_postal,
+                'estado' => $cpData->estado,
+                'municipio' => $cpData->municipio,
+                'colonia' => $request->colonia,
+                'pais' => 'México',
+                'principal' => true
             ]);
 
             // Crear registro de puntos inicial
-            $puntosStmt = $pdo->prepare("
-                INSERT INTO puntos (usuario_id, saldo, updated_at)
-                VALUES (?, 0, NOW())
-            ");
-            $puntosStmt->execute([$userId]);
+            Puntos::create([
+                'usuario_id' => $usuario->id,
+                'saldo' => 0
+            ]);
 
             // Registrar en auditoría
-            $auditStmt = $pdo->prepare("
-                INSERT INTO auditoria (tabla, registro_id, accion, usuario_id, cambios, fecha)
-                VALUES ('usuarios', ?, 'create', ?, ?, NOW())
-            ");
-            $auditStmt->execute([
-                $userId,
-                $userId,
-                json_encode([
-                    'accion' => 'registro_usuario', 
+            Auditoria::create([
+                'tabla' => 'usuarios',
+                'registro_id' => $usuario->id,
+                'accion' => 'create',
+                'usuario_id' => $usuario->id,
+                'cambios' => json_encode([
+                    'accion' => 'registro_usuario',
                     'email' => $request->email,
                     'ip' => $request->ip(),
                     'user_agent' => $request->userAgent()
                 ])
             ]);
 
-            $pdo->commit();
+            DB::commit();
 
             error_log("=== USUARIO CREADO EXITOSAMENTE ===");
-            error_log("Usuario ID: $userId");
+            error_log("Usuario ID: {$usuario->id}");
             error_log("Email: " . $request->email);
 
             // Enviar email de verificación
-            $this->enviarEmailVerificacion($userId, $request->email, $request->nombres);
+            $this->enviarEmailVerificacion($usuario->id, $request->email, $request->nombres);
 
             // Crear notificación de bienvenida
             try {
                 $notificationController = new \App\Http\Controllers\Web\NotificationController();
-                $notificationController->notifyWelcome($userId, $request->nombres);
+                $notificationController->notifyWelcome($usuario->id, $request->nombres);
             } catch (\Exception $e) {
                 error_log("Error creating welcome notification: " . $e->getMessage());
             }
 
             error_log("=== REDIRIGIENDO A LOGIN ===");
             
-            // NO iniciar sesión automáticamente - requiere verificación de email
             return redirect('/login')->with('success', '¡Cuenta creada exitosamente! Por favor, verifica tu correo electrónico antes de iniciar sesión.');
 
         } catch (\Exception $e) {
-            if (isset($pdo)) {
-                $pdo->rollBack();
-            }
+            DB::rollBack();
             
             Log::error('Error en registro de usuario', [
                 'email' => $request->email,
@@ -338,27 +300,20 @@ class AuthController extends Controller
     private function verificarClienteEnOppen($email, $telefono, $rfc)
     {
         // TODO: Implementar integración real con API de Oppen
-        // Por ahora, simularemos la búsqueda en una tabla local
+        // Por ahora, simularemos la búsqueda usando Eloquent
         
         try {
-            $pdo = new \PDO('pgsql:host=localhost;port=5432;dbname=postgres', 'appwebuser', 'appwebpass');
-            $pdo->exec('SET search_path TO appweb, public');
-            
             // Buscar si existe un usuario con el mismo email, teléfono o RFC
-            $stmt = $pdo->prepare("
-                SELECT id, email, telefono, rfc, club_zarza, oppen_customer_id
-                FROM usuarios
-                WHERE email = ? OR telefono = ? OR rfc = ?
-                LIMIT 1
-            ");
-            $stmt->execute([$email, $telefono, strtoupper($rfc)]);
-            $cliente = $stmt->fetch(\PDO::FETCH_ASSOC);
+            $cliente = Usuario::where('email', $email)
+                ->orWhere('telefono', $telefono)
+                ->orWhere('rfc', strtoupper($rfc))
+                ->first();
             
             if ($cliente) {
                 return [
                     'existe' => true,
-                    'tiene_club_zarza' => (bool)$cliente['club_zarza'],
-                    'oppen_id' => $cliente['oppen_customer_id'] ?? $cliente['id']
+                    'tiene_club_zarza' => (bool)$cliente->club_zarza,
+                    'oppen_id' => $cliente->oppen_customer_id ?? $cliente->id
                 ];
             }
             
@@ -373,33 +328,25 @@ class AuthController extends Controller
     /**
      * Actualizar cliente existente en Oppen para agregarlo a Club Zarza
      */
-    private function actualizarClienteOppen(Request $request, $oppenId, $pdo)
+    private function actualizarClienteOppen(Request $request, $oppenId)
     {
         try {
-            $pdo->beginTransaction();
+            DB::beginTransaction();
             
             // Actualizar flag de club_zarza
-            $stmt = $pdo->prepare("
-                UPDATE usuarios 
-                SET club_zarza = true, 
-                    password = ?,
-                    updated_at = NOW()
-                WHERE oppen_customer_id = ? OR id = ?
-            ");
-            $stmt->execute([
-                Hash::make($request->password),
-                $oppenId,
-                $oppenId
-            ]);
+            Usuario::where('oppen_customer_id', $oppenId)
+                ->orWhere('id', $oppenId)
+                ->update([
+                    'club_zarza' => true,
+                    'password' => Hash::make($request->password)
+                ]);
             
-            $pdo->commit();
+            DB::commit();
             
             return redirect('/login')->with('success', '¡Bienvenido a Club Zarza! Tu cuenta ha sido activada. Por favor, inicia sesión.');
             
         } catch (\Exception $e) {
-            if (isset($pdo)) {
-                $pdo->rollBack();
-            }
+            DB::rollBack();
             
             Log::error('Error actualizando cliente Oppen', ['error' => $e->getMessage()]);
             
@@ -421,9 +368,6 @@ class AuthController extends Controller
         
         // Guardar token en base de datos (temporal)
         try {
-            $pdo = new \PDO('pgsql:host=localhost;port=5432;dbname=postgres', 'appwebuser', 'appwebpass');
-            $pdo->exec('SET search_path TO appweb, public');
-            
             // Aquí deberías guardar el token en una tabla de verificaciones
             // Por ahora, lo registramos en el log
             
@@ -582,80 +526,56 @@ class AuthController extends Controller
         }
 
         try {
-            $pdo = new \PDO('pgsql:host=localhost;port=5432;dbname=postgres', 'appwebuser', 'appwebpass');
-            $pdo->exec('SET search_path TO appweb, public');
-            
-            $pdo->beginTransaction();
+            DB::beginTransaction();
 
             // Crear usuario
-            $stmt = $pdo->prepare("
-                INSERT INTO usuarios (
-                    nombres, apellido_paterno, apellido_materno, 
-                    email, telefono, fecha_nacimiento, rfc,
-                    password, rol, club_zarza, created_at, updated_at
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'cliente', true, NOW(), NOW())
-                RETURNING id
-            ");
-            
-            $stmt->execute([
-                $request->nombres,
-                $request->apellido_paterno,
-                $request->apellido_materno,
-                $request->email,
-                $request->telefono,
-                $request->fecha_nacimiento,
-                strtoupper($request->rfc),
-                Hash::make($request->password)
+            $usuario = Usuario::create([
+                'nombres' => $request->nombres,
+                'apellido_paterno' => $request->apellido_paterno,
+                'apellido_materno' => $request->apellido_materno,
+                'email' => $request->email,
+                'telefono' => $request->telefono,
+                'fecha_nacimiento' => $request->fecha_nacimiento,
+                'rfc' => strtoupper($request->rfc),
+                'password' => Hash::make($request->password),
+                'rol' => 'cliente',
+                'club_zarza' => true
             ]);
-            
-            $userId = $stmt->fetchColumn();
 
             // Obtener datos del código postal
-            $cpStmt = $pdo->prepare("SELECT * FROM codigos_postales WHERE id = ?");
-            $cpStmt->execute([$request->codigo_postal_id]);
-            $cpData = $cpStmt->fetch(\PDO::FETCH_ASSOC);
+            $cpData = CodigoPostal::find($request->codigo_postal_id);
 
             if (!$cpData) {
                 throw new \Exception("Código postal no encontrado");
             }
 
             // Crear dirección
-            $dirStmt = $pdo->prepare("
-                INSERT INTO direcciones (
-                    usuario_id, calle, numero, 
-                    codigo_postal_id, codigo_postal, estado, municipio, colonia,
-                    pais, principal, created_at, updated_at
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'México', true, NOW(), NOW())
-            ");
-            $dirStmt->execute([
-                $userId,
-                $request->calle,
-                $request->numero,
-                $request->codigo_postal_id,
-                $cpData['codigo_postal'],
-                $cpData['estado'],
-                $cpData['municipio'],
-                $request->colonia
+            Direccion::create([
+                'usuario_id' => $usuario->id,
+                'calle' => $request->calle,
+                'numero' => $request->numero,
+                'codigo_postal_id' => $request->codigo_postal_id,
+                'codigo_postal' => $cpData->codigo_postal,
+                'estado' => $cpData->estado,
+                'municipio' => $cpData->municipio,
+                'colonia' => $request->colonia,
+                'pais' => 'México',
+                'principal' => true
             ]);
 
             // Crear registro de puntos inicial
-            $puntosStmt = $pdo->prepare("
-                INSERT INTO puntos (usuario_id, saldo, updated_at)
-                VALUES (?, 0, NOW())
-            ");
-            $puntosStmt->execute([$userId]);
+            Puntos::create([
+                'usuario_id' => $usuario->id,
+                'saldo' => 0
+            ]);
 
             // Registrar en auditoría
-            $auditStmt = $pdo->prepare("
-                INSERT INTO auditoria (tabla, registro_id, accion, usuario_id, cambios, fecha)
-                VALUES ('usuarios', ?, 'create', ?, ?, NOW())
-            ");
-            $auditStmt->execute([
-                $userId,
-                Session::get('user_id'), // ID del admin que está creando el cliente
-                json_encode([
+            Auditoria::create([
+                'tabla' => 'usuarios',
+                'registro_id' => $usuario->id,
+                'accion' => 'create',
+                'usuario_id' => Session::get('user_id'),
+                'cambios' => json_encode([
                     'accion' => 'registro_cliente_por_admin',
                     'cliente_email' => $request->email,
                     'admin_id' => Session::get('user_id'),
@@ -665,21 +585,19 @@ class AuthController extends Controller
                 ])
             ]);
 
-            $pdo->commit();
+            DB::commit();
 
             Log::info("Cliente creado exitosamente por admin", [
-                'cliente_id' => $userId,
+                'cliente_id' => $usuario->id,
                 'cliente_email' => $request->email,
                 'admin_id' => Session::get('user_id')
             ]);
 
             return redirect()->route('admin.clients.create')->with('success', 
-                '✅ Cliente registrado exitosamente. Email: ' . $request->email . ' - ID: ' . $userId);
+                '✅ Cliente registrado exitosamente. Email: ' . $request->email . ' - ID: ' . $usuario->id);
 
         } catch (\Exception $e) {
-            if (isset($pdo)) {
-                $pdo->rollBack();
-            }
+            DB::rollBack();
             
             Log::error('Error en registro de cliente por admin', [
                 'exception' => $e->getMessage(),

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Mi Perfil - ZarzaPoints')
+@section('title', 'Mi Perfil - La Zarza Contigo')
 
 @section('content')
 <div class="container mx-auto py-8">

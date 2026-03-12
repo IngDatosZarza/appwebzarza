@@ -1,8 +1,8 @@
-# 🚀 MIGRACIÓN RÁPIDA - ZarzaPoints
+# 🚀 MIGRACIÓN RÁPIDA - La Zarza Contigo
 
 ## 📝 RESUMEN EJECUTIVO
 
-Esta es la guía rápida para migrar ZarzaPoints a un servidor de prueba local.
+Esta es la guía rápida para migrar La Zarza Contigo a un servidor de prueba local.
 
 ---
 
@@ -32,8 +32,8 @@ sudo apt install -y php8.2 php8.2-pgsql php8.2-mbstring php8.2-xml \
 
 # Extraer proyecto
 cd /var/www/
-sudo unzip zarzapoints.zip -d zarzapoints
-cd zarzapoints
+sudo unzip La Zarza Contigo.zip -d La Zarza Contigo
+cd La Zarza Contigo
 
 # Instalar dependencias PHP
 composer install --no-dev --optimize-autoloader
@@ -64,7 +64,7 @@ ALTER SCHEMA appweb OWNER TO appwebuser;
 \q
 
 # Restaurar respaldo
-psql -h localhost -U appwebuser -d postgres -f zarzapoints_backup.sql
+psql -h localhost -U appwebuser -d postgres -f La Zarza Contigo_backup.sql
 
 # Verificar
 psql -h localhost -U appwebuser -d postgres
@@ -147,7 +147,7 @@ Después de migrar, verifica que:
 server {
     listen 80;
     server_name tu-dominio.com;
-    root /var/www/zarzapoints/public;
+    root /var/www/La Zarza Contigo/public;
 
     index index.php;
 
@@ -164,7 +164,7 @@ server {
 ```
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/zarzapoints /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/La Zarza Contigo /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl restart nginx
 ```
@@ -212,7 +212,7 @@ sudo systemctl restart php8.2-fpm
 
 ## 🎉 ¡LISTO!
 
-Tu sistema ZarzaPoints está migrado y funcionando.
+Tu sistema La Zarza Contigo está migrado y funcionando.
 
 **URLs:**
 - Frontend: http://localhost:8000
@@ -225,4 +225,4 @@ Tu sistema ZarzaPoints está migrado y funcionando.
 ---
 
 **Última actualización:** 2025-10-15  
-**Versión:** ZarzaPoints v2.1
+**Versión:** La Zarza Contigo v2.1

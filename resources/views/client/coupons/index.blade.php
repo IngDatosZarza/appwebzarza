@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Cupones ZarzaPoints')
+@section('title', 'Cupones La Zarza Contigo')
 
 @section('content')
 <div class="container mx-auto px-4 py-8">
@@ -10,7 +10,7 @@
             <div>
                 <h1 class="text-4xl font-bold mb-2">
                     <i class="fas fa-ticket-alt mr-3"></i>
-                    Cupones ZarzaPoints
+                    Cupones La Zarza Contigo
                 </h1>
                 <p class="text-purple-100 text-lg">Canjea tus puntos por increíbles descuentos y ofertas</p>
             </div>
@@ -206,7 +206,7 @@
                 </div>
                 <div>
                     <div class="font-medium mb-1">1. Canjea tus puntos</div>
-                    <div>Usa tus puntos ZarzaPoints para obtener cupones de descuento</div>
+                    <div>Usa tus puntos La Zarza Contigo para obtener cupones de descuento</div>
                 </div>
             </div>
             <div class="flex items-start">

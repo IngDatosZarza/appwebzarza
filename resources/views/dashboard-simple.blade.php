@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard - ZarzaPoints')
+@section('title', 'Dashboard - La Zarza Contigo')
 
 @section('content')
 <div class="container mx-auto py-8">
@@ -27,7 +27,7 @@
         @else
             <div class="bg-white rounded-lg shadow p-6 text-center">
                 <h1 class="text-3xl font-bold text-gray-900">Sistema de Puntos</h1>
-                <p class="text-gray-600 mt-4">Inicia sesión para ver tu dashboard personalizado</p>
+                <p class="text-gray-600 mt-4">Inicia sesión para ver tu Inicio personalizado</p>
                 <div class="mt-6 space-x-4">
                     <a href="/login" class="bg-blue-500 text-white px-4 py-2 rounded">Iniciar Sesión</a>
                     <a href="/register" class="bg-green-500 text-white px-4 py-2 rounded">Registrarse</a>

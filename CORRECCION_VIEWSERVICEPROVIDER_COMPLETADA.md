@@ -76,7 +76,7 @@ Illuminate\View\FileViewFinder::__construct(): Argument #2 ($paths) must be of t
 
 ## 🚀 Sistema Listo Para Uso
 
-El sistema **ZarzaPoints** está completamente operativo con:
+El sistema **La Zarza Contigo** está completamente operativo con:
 - ✅ Todas las funcionalidades implementadas
 - ✅ Sin errores críticos
 - ✅ Base de datos conectada

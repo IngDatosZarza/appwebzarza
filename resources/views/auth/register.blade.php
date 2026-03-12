@@ -21,7 +21,7 @@ if ($helperPath && file_exists($helperPath)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrarse - ZarzaPoints</title>
+    <title>Registrarse - La Zarza Contigo</title>
     <link rel="icon" type="image/png" href="/logozarza.png">
     <!-- Tailwind CSS CDN - Solo para desarrollo, cambiar a build para producción -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -136,14 +136,14 @@ if ($helperPath && file_exists($helperPath)) {
         <div>
             <div class="text-center">
                 <div class="mx-auto mb-6">
-                    <img src="/logoZarza.webp" alt="ZarzaPoints" class="h-20 w-auto mx-auto mb-4 drop-shadow-lg">
+                    <img src="/logoZarza.webp" alt="La Zarza Contigo" class="h-20 w-auto mx-auto mb-4 drop-shadow-lg">
                     
                 </div>
                 <h2 class="text-3xl font-extrabold text-white">
                     Crear Cuenta
                 </h2>
                 <p class="mt-2 text-sm text-pink-100">
-                    Únete a ZarzaPoints y comienza a ganar puntos
+                    Únete a La Zarza Contigo y comienza a ganar puntos
                 </p>
             </div>
         </div>
@@ -598,7 +598,7 @@ if ($helperPath && file_exists($helperPath)) {
         <div class="bg-white bg-opacity-20 rounded-lg p-6 text-white">
             <h3 class="font-semibold mb-4 text-center">
                 <i class="fas fa-gift mr-2"></i>
-                ¿Por qué unirse a ZarzaPoints?
+                ¿Por qué unirse a La Zarza Contigo?
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                 <div class="text-center">

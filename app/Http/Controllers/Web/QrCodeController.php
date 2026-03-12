@@ -37,7 +37,7 @@ class QrCodeController extends Controller
                 'tipo' => 'cupon_zarza',
                 'codigo' => $codigo_qr,
                 'timestamp' => time(),
-                'sistema' => 'ZarzaPoints'
+                'sistema' => 'La Zarza Contigo'
             ];
             
             $qrContent = json_encode($qrData);
@@ -74,7 +74,7 @@ class QrCodeController extends Controller
             $context = stream_context_create([
                 'http' => [
                     'timeout' => 5,
-                    'user_agent' => 'ZarzaPoints/1.0'
+                    'user_agent' => 'La Zarza Contigo/1.0'
                 ]
             ]);
             
@@ -117,7 +117,7 @@ class QrCodeController extends Controller
         
         // Título
         $font_size = 5;
-        $title = "CUPON ZARZAPOINTS";
+        $title = "CUPON La Zarza Contigo";
         $title_width = imagefontwidth($font_size) * strlen($title);
         $title_x = ($width - $title_width) / 2;
         imagestring($image, $font_size, $title_x, 30, $title, $purple_color);

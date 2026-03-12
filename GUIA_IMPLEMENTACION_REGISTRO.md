@@ -225,8 +225,8 @@ MAIL_PORT=587
 MAIL_USERNAME=tu-email@gmail.com
 MAIL_PASSWORD=tu-app-password
 MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS=noreply@zarzapoints.com
-MAIL_FROM_NAME="ZarzaPoints"
+MAIL_FROM_ADDRESS=noreply@La Zarza Contigo.com
+MAIL_FROM_NAME="La Zarza Contigo"
 ```
 
 **Crear Mailable:**

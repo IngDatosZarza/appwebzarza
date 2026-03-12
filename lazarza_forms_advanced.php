@@ -335,7 +335,7 @@ if (isset($_POST['action'])) {
         <div class="bg-white rounded-lg shadow-xl p-8 mb-6">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4">
-                    <img src="/logoZarza.webp" alt="ZarzaPoints" class="h-16 w-auto">
+                    <img src="/logoZarza.webp" alt="La Zarza Contigo" class="h-16 w-auto">
                     <div>
                         <h1 class="text-3xl font-bold zarza-text">Formulario de Pruebas</h1>
                         <p class="text-gray-600">Sistema de Gestión de Clientes - Lazarza</p>

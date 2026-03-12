@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Mis Compras | ZarzaPoints')
+@section('title', 'Mis Compras | La Zarza Contigo')
 
 @section('content')
 <div class="space-y-8">

@@ -1,13 +1,13 @@
 @echo off
 chcp 65001 > nul
 color 0B
-title ZarzaPoints - Utilidades de Migración
+title La Zarza Contigo - Utilidades de Migración
 
 :MENU
 cls
 echo.
 echo ═══════════════════════════════════════════════════════
-echo     🎯 ZARZAPOINTS - UTILIDADES DE MIGRACIÓN
+echo     🎯 La Zarza Contigo - UTILIDADES DE MIGRACIÓN
 echo ═══════════════════════════════════════════════════════
 echo.
 echo  Selecciona una opción:

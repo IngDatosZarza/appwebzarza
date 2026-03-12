@@ -1,4 +1,4 @@
-# 📦 ZarzaPoints - Checklist de Migración
+# 📦 La Zarza Contigo - Checklist de Migración
 
 ## ✅ PASOS COMPLETADOS
 

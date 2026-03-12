@@ -1,4 +1,4 @@
-# 📚 ÍNDICE DE DOCUMENTACIÓN - ZarzaPoints
+# 📚 ÍNDICE DE DOCUMENTACIÓN - La Zarza Contigo
 
 ## 🎯 Guía Rápida de Uso
 
@@ -41,7 +41,26 @@
 | **MODULO_TICKETS_COMPLETADO.md** | Feature: Registro de tickets |
 | **NAVBAR_CLIENTES_ESTADO.md** | Feature: Navbar con estado de sesión |
 | **HEADER_AUTENTICACION_COMPLETADO.md** | Feature: Header de autenticación |
+| **MIGRACION_PDO_A_ELOQUENT_COMPLETADA.md** | ⭐ Migración de PDO a Eloquent ORM |
+| **MEJORAS_MEDIA_PRIORIDAD_COMPLETADAS.md** | ⭐ Services, Repositories y Tests |
+| **TODOS_PENDIENTES.md** | 📋 Lista de TODOs pendientes (14 items) |
 | **CORRECCION_*.md** | Correcciones aplicadas al sistema |
+
+### 🏗️ Arquitectura de Software (NUEVO)
+
+| Componente | Ubicación | Descripción |
+|------------|-----------|-------------|
+| **Services** | `app/Services/` | Lógica de negocio centralizada |
+| - AuthService | `app/Services/AuthService.php` | Autenticación centralizada |
+| - PointsService | `app/Services/PointsService.php` | Gestión de puntos |
+| - CouponService | `app/Services/CouponService.php` | Gestión de cupones |
+| **Repositories** | `app/Repositories/` | Acceso a datos |
+| - UserRepository | `app/Repositories/UserRepository.php` | CRUD de usuarios |
+| - CouponRepository | `app/Repositories/CouponRepository.php` | CRUD de cupones |
+| **Tests** | `tests/Unit/` | Tests automatizados (25 tests) |
+| - AuthServiceTest | `tests/Unit/Services/AuthServiceTest.php` | 8 tests |
+| - PointsServiceTest | `tests/Unit/Services/PointsServiceTest.php` | 8 tests |
+| - UserRepositoryTest | `tests/Unit/Repositories/UserRepositoryTest.php` | 9 tests |
 
 ---
 
@@ -183,7 +202,7 @@ appwebzarza/
 │  └─ create_*.php (Creación de datos)
 │
 └─ 📁 RESPALDOS (Se crea automáticamente)
-   ├─ zarzapoints_backup_*.sql
+   ├─ La Zarza Contigo_backup_*.sql
    └─ backup_info_*.txt
 ```
 
@@ -280,8 +299,73 @@ Después de migrar:
 
 ---
 
-**Última actualización:** 2025-10-15 21:20  
-**Sistema:** ZarzaPoints v2.1  
-**Total de archivos de documentación:** 15+
+**Última actualización:** Febrero 26, 2026  
+**Sistema:** La Zarza Contigo v2.2  
+**Total de archivos de documentación:** 18+  
+**Arquitectura:** Laravel 12 + Services/Repositories + Tests unitarios
 
-🎉 **¡Todo listo para migrar tu sistema!**
+🎉 **¡Sistema con arquitectura mejorada y tests automatizados!**
+
+---
+
+## 🆕 NOVEDADES - Febrero 2026
+
+### ✅ Arquitectura de Software Mejorada
+
+**Se implementaron:**
+- 🏗️ **Service Layer Pattern** - 3 servicios (Auth, Points, Coupons)
+- 📦 **Repository Pattern** - 2 repositorios (User, Coupon)
+- 🧪 **Tests Automatizados** - 25 tests unitarios funcionando
+- 🔐 **Autenticación Centralizada** - Sistema dual consolidado
+- 📋 **TODOs Documentados** - 14 tareas priorizadas
+
+**Beneficios:**
+- ✅ Código más limpio y mantenible
+- ✅ Fácil de testear
+- ✅ Escalable y extensible
+- ✅ Separación clara de responsabilidades
+
+**Ver documentación completa:**
+- `MEJORAS_MEDIA_PRIORIDAD_COMPLETADAS.md` - Guía completa de los cambios
+- `TODOS_PENDIENTES.md` - Próximas mejoras planificadas
+
+### 🔧 Cómo Usar los Nuevos Componentes
+
+**AuthService - Autenticación:**
+```php
+use App\Services\AuthService;
+
+$authService = app(AuthService::class);
+$user = $authService->getCurrentUser();
+
+if ($authService->isAdmin()) {
+    // Lógica de admin
+}
+```
+
+**PointsService - Puntos:**
+```php
+use App\Services\PointsService;
+
+$pointsService = app(PointsService::class);
+$saldo = $pointsService->getUserBalance($userId);
+$resultado = $pointsService->addPoints($userId, 100, 'Compra', $adminId);
+```
+
+**CouponService - Cupones:**
+```php
+use App\Services\CouponService;
+
+$couponService = app(CouponService::class);
+$cupones = $couponService->getAvailableCoupons($userId);
+$resultado = $couponService->redeemCoupon($userId, $cuponId);
+```
+
+**Ejecutar Tests:**
+```bash
+php artisan test                    # Todos los tests
+php artisan test --testsuite=Unit  # Solo tests unitarios
+php artisan test --coverage        # Con cobertura (requiere Xdebug)
+```
+
+---

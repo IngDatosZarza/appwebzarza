@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guía de Acceso - ZarzaPoints</title>
+    <title>Guía de Acceso - La Zarza Contigo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -13,7 +13,7 @@
             <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full mb-4">
                 <i class="fas fa-info-circle text-white text-2xl"></i>
             </div>
-            <h1 class="text-4xl font-bold text-gray-900 mb-2">Guía de Acceso - ZarzaPoints</h1>
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Guía de Acceso - La Zarza Contigo</h1>
             <p class="text-lg text-gray-600">Cómo acceder al módulo de tickets y otras funcionalidades</p>
         </div>
 

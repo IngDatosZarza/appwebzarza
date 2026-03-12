@@ -22,3 +22,33 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Archivos temporales y de debug
+*_cookies.txt
+*.txt
+!robots.txt
+test_*.php
+check_*.php
+fix_*.php
+create_*.php
+diagnose*.php
+diagnostic*.php
+verify_*.php
+verificar_*.php
+setup_*.php
+recreate*.php
+repair_*.php
+find-*.php
+update_*.php
+add_*.php
+
+# Archivos de desarrollo temporal
+/dashboard.php
+/frontend-router.php
+/lazarza_forms.php
+/lazarza_forms_advanced.php
+/start_server.php
+
+# Excluir scripts SQL temporales en raíz
+/*.sql
+!base_appwebzarza.sql

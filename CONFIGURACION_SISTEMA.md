@@ -1,8 +1,8 @@
-# 🔐 CONFIGURACIÓN DEL SISTEMA - ZarzaPoints
+# 🔐 CONFIGURACIÓN DEL SISTEMA - La Zarza Contigo
 
 ## 📋 INFORMACIÓN GENERAL
 
-**Nombre del Sistema:** ZarzaPoints  
+**Nombre del Sistema:** La Zarza Contigo  
 **Versión:** 2.1  
 **Framework:** Laravel 12.33.0  
 **PHP:** 8.2.12  
@@ -201,7 +201,7 @@ appwebzarza/
 ## 🔧 VARIABLES DE ENTORNO (.env)
 
 ```env
-APP_NAME="ZarzaPoints"
+APP_NAME="La Zarza Contigo"
 APP_ENV=local
 APP_KEY=base64:YOUR_APP_KEY_HERE
 APP_DEBUG=true
@@ -329,7 +329,7 @@ Get-Content storage/logs/laravel.log -Wait -Tail 50
 ## 🆘 CONTACTOS Y SOPORTE
 
 **Desarrollador:** GitHub Copilot  
-**Proyecto:** ZarzaPoints - Sistema de Fidelidad  
+**Proyecto:** La Zarza Contigo - Sistema de Fidelidad  
 **Repositorio:** Local (c:\xampp\htdocs\appwebzarza)
 
 ### Archivos de Ayuda

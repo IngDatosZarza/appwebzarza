@@ -231,4 +231,4 @@ El sistema de códigos de cupones está completamente implementado y listo para 
 
 ---
 **Fecha de Completado**: 2024-01-15
-**Sistema**: ZarzaPoints - Gestión de Puntos de Fidelidad
+**Sistema**: La Zarza Contigo - Gestión de Puntos de Fidelidad

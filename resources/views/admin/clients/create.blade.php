@@ -16,7 +16,7 @@
                         <i class="fas fa-user-plus text-blue-600 mr-3"></i>
                         Registrar Nuevo Cliente
                     </h1>
-                    <p class="text-gray-600 mt-2">Crea un nuevo cliente en el sistema ZarzaPoints</p>
+                    <p class="text-gray-600 mt-2">Crea un nuevo cliente en el sistema La Zarza Contigo</p>
                 </div>
             </div>
         </div>

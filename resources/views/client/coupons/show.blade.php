@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Cupón ZarzaPoints')
+@section('title', 'Cupón La Zarza Contigo')
 
 @section('content')
 <div class="container mx-auto px-4 py-8">
@@ -155,7 +155,7 @@
                         Términos y condiciones
                     </h4>
                     <ul class="text-sm text-blue-700 space-y-1">
-                        <li>• Este cupón es válido únicamente en sucursales ZarzaPoints</li>
+                        <li>• Este cupón es válido únicamente en sucursales La Zarza Contigo</li>
                         <li>• El cupón debe ser presentado antes de realizar el pago</li>
                         <li>• No es acumulable con otras promociones</li>
                         <li>• El cupón es personal e intransferible</li>
@@ -192,7 +192,7 @@
                 <i class="fas fa-store mr-2"></i>
                 ¿Necesitas ayuda?
             </h3>
-            <p class="text-gray-600 mb-4">Si tienes problemas para usar este cupón, contacta con cualquier sucursal ZarzaPoints</p>
+            <p class="text-gray-600 mb-4">Si tienes problemas para usar este cupón, contacta con cualquier sucursal La Zarza Contigo</p>
             <div class="flex justify-center space-x-6 text-sm text-gray-700">
                 <div class="flex items-center">
                     <i class="fas fa-phone text-blue-500 mr-2"></i>
@@ -200,7 +200,7 @@
                 </div>
                 <div class="flex items-center">
                     <i class="fas fa-envelope text-purple-500 mr-2"></i>
-                    <span>✉️ ayuda@zarzapoints.com</span>
+                    <span>✉️ ayuda@La Zarza Contigo.com</span>
                 </div>
             </div>
         </div>
@@ -231,7 +231,7 @@ function compartirCupon() {
     if (navigator.share) {
         navigator.share({
             title: '{{ $cupon["nombre"] }}',
-            text: 'He canjeado un cupón ZarzaPoints: {{ $cupon["descripcion"] }}',
+            text: 'He canjeado un cupón La Zarza Contigo: {{ $cupon["descripcion"] }}',
             url: window.location.href
         });
     } else {
@@ -268,7 +268,7 @@ function showQrFullscreen() {
                 <div class="font-mono text-sm font-bold text-blue-800">{{ $cupon['codigo_qr'] }}</div>
             </div>
             
-            <p class="text-sm text-gray-600 mb-4">Presenta este código en cualquier sucursal ZarzaPoints</p>
+            <p class="text-sm text-gray-600 mb-4">Presenta este código en cualquier sucursal La Zarza Contigo</p>
             <button onclick="this.closest('.fixed').remove()" 
                     class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors">
                 <i class="fas fa-times mr-2"></i>

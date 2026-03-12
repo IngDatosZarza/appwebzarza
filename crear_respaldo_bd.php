@@ -24,7 +24,7 @@ if (!is_dir($backupDir)) {
 
 // Nombre del archivo con timestamp
 $timestamp = date('Y-m-d_His');
-$backupFile = "$backupDir/zarzapoints_backup_$timestamp.sql";
+$backupFile = "$backupDir/La Zarza Contigo_backup_$timestamp.sql";
 
 echo "📁 Directorio de respaldo: $backupDir\n";
 echo "📄 Archivo: " . basename($backupFile) . "\n\n";
@@ -54,7 +54,7 @@ try {
     echo "\n";
     
     // Crear archivo de respaldo
-    $sql = "-- ZarzaPoints Database Backup\n";
+    $sql = "-- La Zarza Contigo Database Backup\n";
     $sql .= "-- Generated: " . date('Y-m-d H:i:s') . "\n";
     $sql .= "-- Schema: $schema\n";
     $sql .= "-- Tables: " . count($tables) . "\n\n";
@@ -149,7 +149,7 @@ try {
     
     // Crear archivo con información del respaldo
     $infoFile = "$backupDir/backup_info_$timestamp.txt";
-    $info = "ZarzaPoints - Información del Respaldo\n";
+    $info = "La Zarza Contigo - Información del Respaldo\n";
     $info .= "======================================\n";
     $info .= "Fecha: " . date('Y-m-d H:i:s') . "\n";
     $info .= "Archivo: " . basename($backupFile) . "\n";

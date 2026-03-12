@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ========================================
-# ZarzaPoints - Scripts de Migración
+# La Zarza Contigo - Scripts de Migración
 # Bash para Linux/Unix
 # ========================================
 
@@ -14,7 +14,7 @@ NC='\033[0m' # No Color
 
 clear
 
-echo -e "${CYAN}🎯 ZARZAPOINTS - UTILIDADES DE MIGRACIÓN${NC}"
+echo -e "${CYAN}🎯 La Zarza Contigo - UTILIDADES DE MIGRACIÓN${NC}"
 echo -e "${CYAN}========================================${NC}"
 echo ""
 
@@ -55,7 +55,7 @@ package_project() {
     echo -e "${CYAN}📁 Empaquetando proyecto...${NC}"
     
     timestamp=$(date +"%Y-%m-%d_%H%M%S")
-    zipname="zarzapoints_${timestamp}.tar.gz"
+    zipname="La Zarza Contigo_${timestamp}.tar.gz"
     
     echo -e "${YELLOW}Creando archivo: $zipname${NC}"
     
@@ -193,8 +193,8 @@ fix_permissions() {
     # Configurar SELinux si está activo
     if command -v semanage &> /dev/null; then
         echo "Configurando SELinux..."
-        semanage fcontext -a -t httpd_sys_rw_content_t "/var/www/zarzapoints/storage(/.*)?"
-        semanage fcontext -a -t httpd_sys_rw_content_t "/var/www/zarzapoints/bootstrap/cache(/.*)?"
+        semanage fcontext -a -t httpd_sys_rw_content_t "/var/www/La Zarza Contigo/storage(/.*)?"
+        semanage fcontext -a -t httpd_sys_rw_content_t "/var/www/La Zarza Contigo/bootstrap/cache(/.*)?"
         restorecon -Rv storage bootstrap/cache
         echo -e "${GREEN}  ✓ SELinux configurado${NC}"
     fi
@@ -207,7 +207,7 @@ fix_permissions() {
 # Menú principal
 while true; do
     clear
-    echo -e "${CYAN}🎯 ZARZAPOINTS - UTILIDADES DE MIGRACIÓN${NC}"
+    echo -e "${CYAN}🎯 La Zarza Contigo - UTILIDADES DE MIGRACIÓN${NC}"
     echo -e "${CYAN}========================================${NC}"
     echo ""
     

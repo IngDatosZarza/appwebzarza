@@ -226,5 +226,5 @@ http://localhost:8000/cupones
 ---
 
 **Fecha:** 2025-10-13  
-**Sistema:** ZarzaPoints v2.0  
+**Sistema:** La Zarza Contigo v2.0  
 **Feature:** Popup de Cupones con QR Instantáneo

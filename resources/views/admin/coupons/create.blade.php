@@ -15,7 +15,7 @@
                     <i class="fas fa-plus-circle text-purple-600 mr-3"></i>
                     Crear Nuevo Cupón
                 </h1>
-                <p class="text-gray-600 mt-2">Configura un nuevo cupón para el sistema ZarzaPoints</p>
+                <p class="text-gray-600 mt-2">Configura un nuevo cupón para el sistema La Zarza Contigo</p>
             </div>
         </div>
     </div>

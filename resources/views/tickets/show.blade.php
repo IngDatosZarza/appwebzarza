@@ -254,7 +254,7 @@
 <script>
 function shareTicket() {
     const ticketData = {
-        title: 'ZarzaPoints - Ticket Registrado',
+        title: 'La Zarza Contigo - Ticket Registrado',
         text: `¡Acabo de ganar {{ $ticket->puntos_generados }} puntos con mi ticket #{{ $ticket->numero_ticket }}! 🎉`,
         url: window.location.href
     };

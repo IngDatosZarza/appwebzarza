@@ -228,4 +228,4 @@ El sistema ahora previene canjes duplicados con validación visual y de backend.
 ---
 **Fecha**: 2025-10-13  
 **Feature**: Deshabilitar cupones ya canjeados  
-**Sistema**: ZarzaPoints v2.1
+**Sistema**: La Zarza Contigo v2.1

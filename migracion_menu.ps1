@@ -1,9 +1,9 @@
 # ========================================
-# ZarzaPoints - Scripts de Migración
+# La Zarza Contigo - Scripts de Migración
 # PowerShell para Windows
 # ========================================
 
-Write-Host "🎯 ZARZAPOINTS - UTILIDADES DE MIGRACIÓN" -ForegroundColor Cyan
+Write-Host "🎯 La Zarza Contigo - UTILIDADES DE MIGRACIÓN" -ForegroundColor Cyan
 Write-Host "========================================`n" -ForegroundColor Cyan
 
 function Show-Menu {
@@ -38,7 +38,7 @@ function Package-Project {
     Write-Host "`n📁 Empaquetando proyecto..." -ForegroundColor Cyan
     
     $timestamp = Get-Date -Format "yyyy-MM-dd_HHmmss"
-    $zipName = "zarzapoints_$timestamp.zip"
+    $zipName = "La Zarza Contigo_$timestamp.zip"
     
     Write-Host "Creando archivo: $zipName" -ForegroundColor Yellow
     
@@ -171,7 +171,7 @@ function Clear-LaravelCache {
 # Menú principal
 do {
     Clear-Host
-    Write-Host "🎯 ZARZAPOINTS - UTILIDADES DE MIGRACIÓN" -ForegroundColor Cyan
+    Write-Host "🎯 La Zarza Contigo - UTILIDADES DE MIGRACIÓN" -ForegroundColor Cyan
     Write-Host "========================================`n" -ForegroundColor Cyan
     
     Show-Menu
