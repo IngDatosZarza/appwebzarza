@@ -5,8 +5,6 @@ namespace App\Http\Controllers\Web;
 use App\Models\Cupon;
 use App\Models\CuponAsignado;
 use App\Models\Usuario;
-use App\Models\Puntos;
-use App\Models\TransaccionPuntos;
 use App\Models\Auditoria;
 use App\Services\AuthService;
 use Illuminate\Http\Request;
@@ -55,10 +53,8 @@ class CouponsController
                 ->toArray();
 
             // Obtener lista de clientes para asignación
-            $clientes = Usuario::leftJoin('puntos', 'usuarios.id', '=', 'puntos.usuario_id')
-                ->select('usuarios.id', 'usuarios.email')
+            $clientes = Usuario::select('usuarios.id', 'usuarios.email')
                 ->selectRaw("usuarios.nombres || ' ' || usuarios.apellido_paterno || COALESCE(' ' || usuarios.apellido_materno, '') as nombre_completo")
-                ->selectRaw('COALESCE(puntos.saldo, 0) as puntos')
                 ->where('usuarios.rol', 'cliente')
                 ->orderBy('usuarios.nombres')
                 ->orderBy('usuarios.apellido_paterno')
@@ -100,14 +96,11 @@ class CouponsController
         $request->validate([
             'nombre' => 'required|string|max:255',
             'descripcion' => 'required|string',
-            'puntos_requeridos' => 'required|integer|min:1',
             'fecha_inicio' => 'required|date',
             'fecha_fin' => 'required|date|after:fecha_inicio',
         ], [
             'nombre.required' => 'El nombre del cupón es obligatorio',
             'descripcion.required' => 'La descripción es obligatoria',
-            'puntos_requeridos.required' => 'Los puntos requeridos son obligatorios',
-            'puntos_requeridos.min' => 'Los puntos requeridos deben ser al menos 1',
             'fecha_inicio.required' => 'La fecha de inicio es obligatoria',
             'fecha_fin.required' => 'La fecha de fin es obligatoria',
             'fecha_fin.after' => 'La fecha de fin debe ser posterior a la fecha de inicio',
@@ -117,10 +110,9 @@ class CouponsController
             // Obtener datos validados
             $nombre = trim($request->input('nombre'));
             $descripcion = trim($request->input('descripcion'));
-            $puntos_requeridos = (int) $request->input('puntos_requeridos');
             $fecha_inicio = $request->input('fecha_inicio');
             $fecha_fin = $request->input('fecha_fin');
-            $activo = $request->has('activo');
+            $activo = (bool) $request->has('activo');
 
             DB::beginTransaction();
 
@@ -128,7 +120,7 @@ class CouponsController
             $cupon = Cupon::create([
                 'nombre' => $nombre,
                 'descripcion' => $descripcion,
-                'puntos_requeridos' => $puntos_requeridos,
+                'puntos_requeridos' => 0,
                 'fecha_inicio' => $fecha_inicio,
                 'fecha_fin' => $fecha_fin,
                 'activo' => $activo,
@@ -144,7 +136,6 @@ class CouponsController
                 'cambios' => json_encode([
                     'nombre' => $nombre,
                     'descripcion' => $descripcion,
-                    'puntos_requeridos' => $puntos_requeridos,
                     'activo' => $activo
                 ])
             ]);
@@ -207,12 +198,11 @@ class CouponsController
             // Validar datos
             $nombre = trim($request->input('nombre'));
             $descripcion = trim($request->input('descripcion'));
-            $puntos_requeridos = (int) $request->input('puntos_requeridos');
             $fecha_inicio = $request->input('fecha_inicio');
             $fecha_fin = $request->input('fecha_fin');
-            $activo = $request->has('activo');
+            $activo = (bool) $request->has('activo');
 
-            if (empty($nombre) || empty($descripcion) || $puntos_requeridos <= 0) {
+            if (empty($nombre) || empty($descripcion)) {
                 return back()->with('error', 'Todos los campos son obligatorios')->withInput();
             }
 
@@ -226,7 +216,6 @@ class CouponsController
             $cupon->update([
                 'nombre' => $nombre,
                 'descripcion' => $descripcion,
-                'puntos_requeridos' => $puntos_requeridos,
                 'fecha_inicio' => $fecha_inicio,
                 'fecha_fin' => $fecha_fin,
                 'activo' => $activo,
@@ -244,7 +233,6 @@ class CouponsController
                     'nuevo' => [
                         'nombre' => $nombre,
                         'descripcion' => $descripcion,
-                        'puntos_requeridos' => $puntos_requeridos,
                         'activo' => $activo
                     ]
                 ])
@@ -330,7 +318,7 @@ class CouponsController
 
             // Verificar que el cupón existe y está activo
             $cupon = Cupon::where('id', $id)
-                ->where('activo', true)
+                ->whereRaw('"activo" = true')
                 ->first();
 
             if (!$cupon) {
@@ -345,11 +333,7 @@ class CouponsController
             }
 
             // Verificar que el usuario tiene suficientes puntos
-            $puntos = Puntos::where('usuario_id', $usuario_id)->first();
-
-            if (!$puntos || $puntos->saldo < $cupon->puntos_requeridos) {
-                return back()->with('error', 'El usuario no tiene puntos suficientes');
-            }
+            // (sistema de puntos deshabilitado: la asignación es libre)
 
             DB::beginTransaction();
 
@@ -363,18 +347,6 @@ class CouponsController
                 'estado' => 'pendiente',
                 'codigo_qr' => $codigo_qr,
                 'asignado_por' => $user->id
-            ]);
-
-            // Descontar puntos
-            $puntos->decrement('saldo', $cupon->puntos_requeridos);
-
-            // Registrar transacción de puntos
-            TransaccionPuntos::create([
-                'usuario_id' => $usuario_id,
-                'tipo' => 'canje',
-                'puntos' => $cupon->puntos_requeridos,
-                'descripcion' => 'Canje por cupón: ' . $cupon->nombre,
-                'registrado_por' => $user->id
             ]);
 
             DB::commit();
@@ -434,10 +406,6 @@ class CouponsController
         }
 
         try {
-            // Obtener puntos actuales del usuario
-            $puntos = Puntos::where('usuario_id', $user->id)->first();
-            $saldo_puntos = $puntos ? $puntos->saldo : 0;
-
             // Obtener cupones disponibles con verificación de si ya fueron canjeados
             $cupones_disponibles = Cupon::select(
                     'cupones.*',
@@ -447,10 +415,10 @@ class CouponsController
                     $join->on('cupones.id', '=', 'cupones_asignados.cupon_id')
                          ->where('cupones_asignados.usuario_id', '=', $user->id);
                 })
-                ->where('cupones.activo', true)
+                ->whereRaw('"cupones"."activo" = true')
                 ->whereDate('cupones.fecha_inicio', '<=', DB::raw('CURRENT_DATE'))
                 ->whereDate('cupones.fecha_fin', '>=', DB::raw('CURRENT_DATE'))
-                ->orderBy('cupones.puntos_requeridos', 'ASC')
+                ->orderBy('cupones.nombre', 'ASC')
                 ->get()
                 ->toArray();
 
@@ -477,7 +445,7 @@ class CouponsController
                 ->get()
                 ->toArray();
 
-            return view('client.coupons.index', compact('cupones_disponibles', 'mis_cupones', 'saldo_puntos'));
+            return view('client.coupons.index', compact('cupones_disponibles', 'mis_cupones'));
 
         } catch (Exception $e) {
             return back()->with('error', 'Error al cargar cupones: ' . $e->getMessage());
@@ -500,7 +468,7 @@ class CouponsController
         try {
             // Verificar que el cupón existe y está disponible
             $cupon = Cupon::where('id', $id)
-                ->where('activo', true)
+                ->whereRaw('"activo" = true')
                 ->whereDate('fecha_inicio', '<=', DB::raw('CURRENT_DATE'))
                 ->whereDate('fecha_fin', '>=', DB::raw('CURRENT_DATE'))
                 ->first();
@@ -510,16 +478,6 @@ class CouponsController
                     return response()->json(['success' => false, 'message' => 'Cupón no disponible'], 400);
                 }
                 return back()->with('error', 'Cupón no disponible');
-            }
-
-            // Verificar que el usuario tiene suficientes puntos
-            $puntos = Puntos::where('usuario_id', $user->id)->first();
-
-            if (!$puntos || $puntos->saldo < $cupon->puntos_requeridos) {
-                if (request()->wantsJson()) {
-                    return response()->json(['success' => false, 'message' => 'No tienes puntos suficientes para este cupón'], 400);
-                }
-                return back()->with('error', 'No tienes puntos suficientes para este cupón');
             }
 
             // Verificar que no ha canjeado este cupón antes
@@ -549,21 +507,6 @@ class CouponsController
                 'asignado_por' => $user->id
             ]);
 
-            // Descontar puntos
-            Puntos::where('usuario_id', $user->id)->decrement('saldo', $cupon->puntos_requeridos);
-
-            // Obtener nuevo saldo
-            $nuevo_saldo = Puntos::where('usuario_id', $user->id)->value('saldo');
-
-            // Registrar transacción de puntos
-            TransaccionPuntos::create([
-                'usuario_id' => $user->id,
-                'tipo' => 'canje',
-                'puntos' => $cupon->puntos_requeridos,
-                'descripcion' => 'Canje por cupón: ' . $cupon->nombre,
-                'registrado_por' => $user->id
-            ]);
-
             DB::commit();
 
             // Si es petición AJAX, devolver JSON
@@ -576,10 +519,8 @@ class CouponsController
                         'nombre' => $cupon->nombre,
                         'codigo' => $cupon->codigo,
                         'descripcion' => $cupon->descripcion,
-                        'puntos_requeridos' => (int)$cupon->puntos_requeridos,
                         'codigo_qr' => $codigo_qr
-                    ],
-                    'nuevo_saldo' => (int)$nuevo_saldo
+                    ]
                 ]);
             }
 

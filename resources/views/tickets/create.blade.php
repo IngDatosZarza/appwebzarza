@@ -35,20 +35,7 @@
                 <i class="fas fa-ticket-alt text-white text-2xl"></i>
             </div>
             <h1 class="text-4xl font-bold text-gray-900 mb-2">Registrar Ticket</h1>
-            <p class="text-lg text-gray-600">Gana 100 puntos por cada ticket que registres</p>
-        </div>
-
-        <!-- Puntos Actuales -->
-        <div class="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl shadow-lg p-6 mb-8 text-white">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h2 class="text-2xl font-bold">{{ number_format($saldoActual) }} puntos</h2>
-                    <p class="text-green-100">Tu saldo actual</p>
-                </div>
-                <div class="text-4xl opacity-75">
-                    <i class="fas fa-coins"></i>
-                </div>
-            </div>
+            <p class="text-lg text-gray-600">Registra tus tickets de compra para acceder a beneficios exclusivos</p>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -178,22 +165,6 @@
                             </div>
                         </div>
 
-                        <!-- Puntos a Ganar -->
-                        <div class="mt-8 p-6 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl border border-yellow-200">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h3 class="text-lg font-semibold text-yellow-800 mb-1">
-                                        <i class="fas fa-gift text-yellow-600 mr-2"></i>
-                                        Puntos a Ganar
-                                    </h3>
-                                    <p class="text-yellow-700">Por registrar este ticket</p>
-                                </div>
-                                <div class="text-3xl font-bold text-yellow-600">
-                                    +100 puntos
-                                </div>
-                            </div>
-                        </div>
-
                         <!-- Botones -->
                         <div class="flex flex-col sm:flex-row gap-4 mt-8">
                             <button type="submit" 
@@ -230,25 +201,19 @@
                             <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                                 <i class="fas fa-check text-green-600 text-xs"></i>
                             </div>
-                            <span><strong>100 puntos fijos</strong> por cada ticket registrado</span>
+                            <span>Necesitarás el <strong>número de ticket</strong> físico de tu compra</span>
                         </div>
                         <div class="flex items-start space-x-3">
                             <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                                 <i class="fas fa-check text-green-600 text-xs"></i>
                             </div>
-                            <span>Los puntos se acreditan <strong>inmediatamente</strong></span>
+                            <span>El ticket se registra <strong>una sola vez</strong></span>
                         </div>
                         <div class="flex items-start space-x-3">
                             <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                                 <i class="fas fa-check text-green-600 text-xs"></i>
                             </div>
-                            <span>Cada ticket solo puede registrarse <strong>una vez</strong></span>
-                        </div>
-                        <div class="flex items-start space-x-3">
-                            <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                                <i class="fas fa-check text-green-600 text-xs"></i>
-                            </div>
-                            <span>Puedes canjear puntos por <strong>cupones y descuentos</strong></span>
+                            <span>Acumula compras para acceder a <strong>cupones exclusivos</strong></span>
                         </div>
                     </div>
                 </div>
@@ -273,11 +238,11 @@
                                 </div>
                             </div>
                             <div class="text-right">
-                                <div class="text-sm font-semibold text-green-600">
-                                    +{{ $compra->puntos_generados }}
+                                <div class="text-sm font-semibold text-blue-600">
+                                    ${{ number_format($compra->monto, 2) }}
                                 </div>
                                 <div class="text-xs text-gray-500">
-                                    ${{ number_format($compra->monto, 2) }}
+                                    {{ \Carbon\Carbon::parse($compra->fecha_compra)->format('d/m/Y') }}
                                 </div>
                             </div>
                         </div>
@@ -296,7 +261,6 @@
                     <ul class="text-xs text-purple-800 space-y-2">
                         <li>• Registra tus tickets lo antes posible</li>
                         <li>• Verifica que el número sea correcto</li>
-                        <li>• Los puntos nunca caducan</li>
                         <li>• Revisa cupones disponibles regularmente</li>
                     </ul>
                 </div>

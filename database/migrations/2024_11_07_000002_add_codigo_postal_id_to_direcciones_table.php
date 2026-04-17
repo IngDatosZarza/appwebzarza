@@ -12,12 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('direcciones', function (Blueprint $table) {
-            // Agregar nuevos campos
-            $table->foreignId('codigo_postal_id')->nullable()->after('numero')->constrained('codigos_postales')->onDelete('restrict');
-            $table->string('municipio', 100)->nullable()->after('estado');
-            
-            // Renombrar ciudad a municipio si es necesario
-            // Por ahora solo agregamos municipio y mantenemos ciudad para compatibilidad
+            if (!Schema::hasColumn('direcciones', 'codigo_postal_id')) {
+                $table->foreignId('codigo_postal_id')->nullable()->after('numero')->constrained('codigos_postales')->onDelete('restrict');
+            }
+            if (!Schema::hasColumn('direcciones', 'municipio')) {
+                $table->string('municipio', 100)->nullable()->after('estado');
+            }
         });
     }
 

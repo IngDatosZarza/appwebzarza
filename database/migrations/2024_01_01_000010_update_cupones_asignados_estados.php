@@ -11,18 +11,22 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('cupones_asignados', function (Blueprint $table) {
-            // Cambiar estados para incluir 'usado' y 'bloqueado'
-            $table->dropColumn('estado');
-        });
-        
-        Schema::table('cupones_asignados', function (Blueprint $table) {
-            $table->enum('estado', ['asignado', 'usado', 'vencido', 'bloqueado'])->default('asignado')->after('cupon_id');
-            
-            // Agregar campos para tracking de uso del cupón
-            $table->timestamp('fecha_uso')->nullable()->after('codigo_qr');
-            $table->foreignId('validado_por')->nullable()->constrained('usuarios')->onDelete('set null')->after('fecha_uso');
-        });
+        // Solo ejecutar si el estado todavía tiene los valores antiguos
+        if (Schema::hasColumn('cupones_asignados', 'estado') && !Schema::hasColumn('cupones_asignados', 'fecha_uso')) {
+            Schema::table('cupones_asignados', function (Blueprint $table) {
+                $table->dropColumn('estado');
+            });
+            Schema::table('cupones_asignados', function (Blueprint $table) {
+                $table->enum('estado', ['asignado', 'usado', 'vencido', 'bloqueado'])->default('asignado')->after('cupon_id');
+                $table->timestamp('fecha_uso')->nullable()->after('codigo_qr');
+                $table->foreignId('validado_por')->nullable()->constrained('usuarios')->onDelete('set null')->after('fecha_uso');
+            });
+        } elseif (!Schema::hasColumn('cupones_asignados', 'fecha_uso')) {
+            Schema::table('cupones_asignados', function (Blueprint $table) {
+                $table->timestamp('fecha_uso')->nullable()->after('codigo_qr');
+                $table->foreignId('validado_por')->nullable()->constrained('usuarios')->onDelete('set null')->after('fecha_uso');
+            });
+        }
     }
 
     /**

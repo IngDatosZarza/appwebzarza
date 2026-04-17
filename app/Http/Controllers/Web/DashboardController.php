@@ -7,8 +7,6 @@ use App\Models\Usuario;
 use App\Models\Cupon;
 use App\Models\CuponAsignado;
 use App\Models\Compra;
-use App\Models\TransaccionPuntos;
-use App\Models\Puntos;
 use App\Models\Auditoria;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -31,7 +29,7 @@ class DashboardController extends Controller
         
         // Si es admin, redirigir al panel de administración
         if (Session::get('user_rol') === 'admin') {
-            return redirect('/admin/points');
+            return redirect()->route('admin.coupons.index');
         }
         
         // Dashboard para clientes autenticados
@@ -49,21 +47,15 @@ class DashboardController extends Controller
                 'id' => Session::get('user_id'),
                 'nombre' => Session::get('user_nombre'),
                 'email' => Session::get('user_email'),
-                'puntos' => Session::get('user_puntos', 0)
             ];
             
             // Datos por defecto si no podemos conectar a BD
             $comprasData = ['total_compras' => 0, 'total_gastado' => 0];
             $cuponesDisponibles = 0;
             $misCupones = 0;
-            $transaccionesRecientes = [];
             
             try {
                 $userId = Session::get('user_id');
-                
-                // Actualizar puntos actuales desde BD usando Eloquent
-                $puntos = Puntos::where('usuario_id', $userId)->first();
-                $userData['puntos'] = $puntos ? $puntos->saldo : 0;
                 
                 // Obtener compras del usuario
                 $comprasData = Compra::where('usuario_id', $userId)
@@ -72,7 +64,7 @@ class DashboardController extends Controller
                     ->toArray();
                 
                 // Obtener cupones disponibles
-                $cuponesDisponibles = Cupon::where('activo', true)
+                $cuponesDisponibles = Cupon::whereRaw('"activo" = true')
                     ->whereDate('fecha_inicio', '<=', now())
                     ->whereDate('fecha_fin', '>=', now())
                     ->count();
@@ -82,13 +74,6 @@ class DashboardController extends Controller
                     ->where('cupones_asignados.usuario_id', $userId)
                     ->where('cupones_asignados.estado', 'asignado')
                     ->count();
-                
-                // Obtener transacciones recientes
-                $transaccionesRecientes = TransaccionPuntos::where('usuario_id', $userId)
-                    ->orderBy('created_at', 'desc')
-                    ->limit(5)
-                    ->get(['tipo', 'puntos', 'descripcion', 'created_at'])
-                    ->toArray();
                 
             } catch (\Exception $dbError) {
                 // Si hay error de BD, usar valores por defecto
@@ -100,7 +85,6 @@ class DashboardController extends Controller
                 'comprasData' => $comprasData,
                 'cuponesDisponibles' => $cuponesDisponibles,
                 'misCupones' => $misCupones,
-                'transaccionesRecientes' => $transaccionesRecientes,
                 'isAuthenticated' => true
             ]);
             
@@ -153,12 +137,6 @@ class DashboardController extends Controller
                 return back()->with('error', 'No hay cupones disponibles');
             }
 
-            $puntosUsuario = $usuario->puntos ? $usuario->puntos->saldo : 0;
-            
-            if ($puntosUsuario < $cupon->puntos_requeridos) {
-                return back()->with('error', 'Puntos insuficientes para canjear este cupón');
-            }
-
             // Verificar si ya canjeó este cupón
             $yaCanjeado = CuponAsignado::where('usuario_id', $usuario->id)
                                      ->where('cupon_id', $cupon->id)
@@ -168,21 +146,12 @@ class DashboardController extends Controller
                 return back()->with('error', 'Ya has canjeado este cupón anteriormente');
             }
 
-            // Descontar puntos
-            $usuario->puntos->update([
-                'saldo' => $usuario->puntos->saldo - $cupon->puntos_requeridos,
-                'puntos_utilizados' => $usuario->puntos->puntos_utilizados + $cupon->puntos_requeridos,
-                'ultima_actualizacion' => now(),
-            ]);
-
             // Asignar cupón al usuario
             $cuponAsignado = CuponAsignado::create([
                 'usuario_id' => $usuario->id,
                 'cupon_id' => $cupon->id,
                 'codigo_qr' => 'QR_' . strtoupper(uniqid()),
                 'estado' => 'asignado',
-                'fecha_asignacion' => now(),
-                'fecha_vencimiento' => $cupon->fecha_vencimiento,
             ]);
 
             // Reducir cantidad disponible
@@ -407,7 +376,7 @@ class DashboardController extends Controller
 
         $cupones = Auth::user()->cuponesAsignados()
                              ->with('cupon')
-                             ->orderBy('fecha_asignacion', 'desc')
+                             ->orderBy('created_at', 'desc')
                              ->get();
 
         return view('coupons.my', compact('cupones'));
@@ -434,34 +403,9 @@ class DashboardController extends Controller
         $stats = [
             'total_compras' => (clone $comprasQuery)->count(),
             'total_monto' => (clone $comprasQuery)->sum('monto'),
-            'total_puntos' => (clone $comprasQuery)->sum('puntos_generados'),
         ];
 
         return view('purchases.index', compact('compras', 'stats'));
-    }
-
-    /**
-     * Mostrar historial de puntos
-     */
-    public function pointsHistory()
-    {
-        if (!Auth::check()) {
-            return redirect()->route('login');
-        }
-
-    /** @var Usuario $usuario */
-    $usuario = Auth::user();
-
-        $usuario->loadMissing('puntos');
-
-    $transacciones = $usuario->transaccionesPuntos()
-                 ->with('registradoPor')
-                 ->orderByDesc('created_at')
-                 ->paginate(15);
-
-        $saldoActual = optional($usuario->puntos)->saldo ?? 0;
-
-        return view('points.history', compact('transacciones', 'saldoActual'));
     }
 
     /**
@@ -476,18 +420,24 @@ class DashboardController extends Controller
         try {
             $userId = Session::get('user_id');
             
-            // Obtener datos del usuario usando Eloquent con relaciones
-            $usuario = Usuario::with('puntos')->find($userId);
+            // Obtener datos del usuario usando Eloquent
+            $usuario = Usuario::find($userId);
             
             if (!$usuario) {
                 return redirect()->route('login')->with('error', 'Usuario no encontrado.');
             }
             
-            // Preparar datos para la vista
             $userData = $usuario->toArray();
-            $userData['puntos_saldo'] = $usuario->puntos ? $usuario->puntos->saldo : 0;
             
-            return view('profile.show', ['user' => $userData]);
+            // Cargar dirección principal manualmente para evitar problema con PostgreSQL
+            $direccion = \App\Models\Direccion::where('usuario_id', $userId)
+                ->whereRaw('principal = true')
+                ->first();
+            
+            return view('profile.show', [
+                'user' => $userData,
+                'direccion' => $direccion
+            ]);
             
         } catch (\Exception $e) {
             Log::error('Error al cargar perfil de usuario', [
@@ -517,6 +467,12 @@ class DashboardController extends Controller
             'fecha_nacimiento' => 'nullable|date',
             'email' => 'required|email|max:255',
             'password' => 'nullable|min:6|confirmed',
+            // Validación de dirección (opcional, solo si se proporciona)
+            'calle' => 'nullable|string|max:255',
+            'numero' => 'nullable|string|max:50',
+            'codigo_postal_id' => 'nullable|exists:codigos_postales,id',
+            'referencias' => 'nullable|string|max:500',
+            'tipo' => 'nullable|in:casa,trabajo,otro',
         ]);
 
         try {
@@ -554,6 +510,85 @@ class DashboardController extends Controller
             // Actualizar usuario
             $usuario->update($updateData);
             
+            // Sincronizar con Oppen si el usuario tiene código de Oppen
+            if ($usuario->oppen_customer_id) {
+                try {
+                    $oppenService = new \App\Services\OppenApiService();
+                    
+                    // Preparar datos para Oppen (solo los necesarios)
+                    $datosOppen = [
+                        'nombres' => $request->nombres,
+                        'apellido_paterno' => $request->apellido_paterno,
+                        'apellido_materno' => $request->apellido_materno ?? '',
+                        'email' => $request->email,
+                        'telefono' => $request->telefono ?? '',
+                        'fecha_nacimiento' => $request->fecha_nacimiento ?? '',
+                        'rfc' => $usuario->rfc,
+                        'genero' => $usuario->genero,
+                        'promo_email' => $usuario->promo_email,
+                        'promo_whatsapp' => $usuario->promo_whatsapp,
+                    ];
+                    
+                    // Si hay dirección, incluir datos de dirección
+                    if ($request->filled('codigo_postal_id')) {
+                        $codigoPostal = \App\Models\CodigoPostal::find($request->codigo_postal_id);
+                        if ($codigoPostal) {
+                            $datosOppen['estado'] = $codigoPostal->estado;
+                            $datosOppen['municipio'] = $codigoPostal->municipio;
+                            $datosOppen['colonia'] = $codigoPostal->colonia;
+                            $datosOppen['calle'] = $request->calle ?? 'Sin especificar';
+                        }
+                    }
+                    
+                    $resultadoOppen = $oppenService->actualizarCliente($usuario->oppen_customer_id, $datosOppen);
+                    
+                    if (!$resultadoOppen['success']) {
+                        Log::warning('No se pudo actualizar cliente en Oppen', [
+                            'user_id' => $userId,
+                            'oppen_id' => $usuario->oppen_customer_id,
+                            'error' => $resultadoOppen['error'] ?? 'Error desconocido'
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    // Log pero no fallar la actualización local
+                    Log::error('Error al sincronizar con Oppen', [
+                        'user_id' => $userId,
+                        'exception' => $e->getMessage()
+                    ]);
+                }
+            }
+            
+            // Actualizar o crear dirección si se proporcionan datos
+            if ($request->filled('codigo_postal_id')) {
+                $codigoPostal = \App\Models\CodigoPostal::findOrFail($request->codigo_postal_id);
+                
+                // Buscar dirección principal existente
+                $direccion = \App\Models\Direccion::where('usuario_id', $userId)
+                    ->whereRaw('principal = true')
+                    ->first();
+                
+                $datosDir = [
+                    'usuario_id' => $userId,
+                    'calle' => $request->calle,
+                    'numero' => $request->numero,
+                    'codigo_postal_id' => $request->codigo_postal_id,
+                    'codigo_postal' => $codigoPostal->codigo_postal,
+                    'estado' => $codigoPostal->estado,
+                    'municipio' => $codigoPostal->municipio,
+                    'colonia' => $codigoPostal->colonia,
+                    'referencias' => $request->referencias,
+                    'tipo' => $request->tipo ?? 'casa',
+                    'principal' => true,
+                    'actualizado_por' => $userId
+                ];
+                
+                if ($direccion) {
+                    $direccion->update($datosDir);
+                } else {
+                    \App\Models\Direccion::create($datosDir);
+                }
+            }
+            
             // Registrar en auditoría
             Auditoria::create([
                 'tabla' => 'usuarios',
@@ -562,7 +597,8 @@ class DashboardController extends Controller
                 'usuario_id' => $userId,
                 'cambios' => json_encode([
                     'campo_actualizado' => 'perfil_usuario',
-                    'datos_modificados' => array_keys($updateData)
+                    'datos_modificados' => array_keys($updateData),
+                    'direccion_actualizada' => $request->filled('codigo_postal_id')
                 ])
             ]);
             
@@ -759,5 +795,32 @@ class DashboardController extends Controller
 
             return redirect()->route('admin.transactions')->with('error', 'Error al exportar transacciones: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Mostrar la tarjeta QR personal del cliente autenticado.
+     */
+    public function miTarjeta()
+    {
+        $userId = Session::get('user_id');
+
+        if (!$userId) {
+            return redirect()->route('login');
+        }
+
+        /** @var \App\Models\Usuario $usuario */
+        $usuario = Usuario::findOrFail($userId);
+
+        // Asegurar que el usuario tenga qr_codigo generado
+        if (empty($usuario->qr_codigo)) {
+            $usuario->qr_codigo = 'ZRZ-' . strtoupper(\Illuminate\Support\Str::random(16));
+            $usuario->save();
+        }
+
+        $cuponesDisponibles = CuponAsignado::where('usuario_id', $usuario->id)
+            ->where('estado', 'asignado')
+            ->count();
+
+        return view('client.mi-tarjeta', compact('usuario', 'cuponesDisponibles'));
     }
 }

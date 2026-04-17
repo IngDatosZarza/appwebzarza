@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Transacciones de Puntos - Test')
+@section('title', 'Transacciones - Test')
 
 @section('content')
 <div class="container mx-auto py-8">
-    <h1 class="text-2xl font-bold mb-6">Test - Transacciones de Puntos</h1>
+    <h1 class="text-2xl font-bold mb-6">Test - Transacciones</h1>
     
     <p>Usuario autenticado: {{ Session::get('user_authenticated') ? 'Sí' : 'No' }}</p>
     <p>Rol de usuario: {{ Session::get('user_rol') }}</p>
@@ -20,7 +20,7 @@
                         <th class="px-4 py-2 text-left">ID</th>
                         <th class="px-4 py-2 text-left">Usuario</th>
                         <th class="px-4 py-2 text-left">Tipo</th>
-                        <th class="px-4 py-2 text-left">Puntos</th>
+                        <th class="px-4 py-2 text-left">Cantidad</th>
                     </tr>
                 </thead>
                 <tbody>

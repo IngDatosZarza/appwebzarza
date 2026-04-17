@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
 class Usuario extends Authenticatable
@@ -29,10 +30,24 @@ class Usuario extends Authenticatable
         'fecha_nacimiento',
         'rfc',
         'genero',
+        'promo_email',
+        'promo_whatsapp',
         'rol',
         'club_zarza',
         'oppen_customer_id',
+        'qr_codigo',
     ];
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function (self $usuario) {
+            if (empty($usuario->qr_codigo)) {
+                $usuario->qr_codigo = 'ZRZ-' . strtoupper(Str::random(16));
+            }
+        });
+    }
 
     /**
      * The attributes that should be hidden for serialization.
@@ -56,6 +71,8 @@ class Usuario extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'club_zarza' => 'boolean',
+            'promo_email' => 'boolean',
+            'promo_whatsapp' => 'boolean',
         ];
     }
 
@@ -67,7 +84,7 @@ class Usuario extends Authenticatable
 
     public function direccionPrincipal()
     {
-        return $this->hasOne(Direccion::class)->where('principal', true);
+        return $this->hasOne(Direccion::class)->whereRaw('principal = ?', [true]);
     }
 
     public function puntos()

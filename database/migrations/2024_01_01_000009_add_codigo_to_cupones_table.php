@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('cupones', function (Blueprint $table) {
-            // Agregar código único para el cupón (ej: BANDERILLAS20, PROMO50, etc)
-            $table->string('codigo', 50)->unique()->after('nombre');
-        });
+        if (!Schema::hasColumn('cupones', 'codigo')) {
+            Schema::table('cupones', function (Blueprint $table) {
+                // Agregar código único para el cupón (ej: BANDERILLAS20, PROMO50, etc)
+                $table->string('codigo', 50)->unique()->after('nombre');
+            });
+        }
     }
 
     /**

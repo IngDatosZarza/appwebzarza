@@ -8,7 +8,7 @@
     <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
         <div class="flex items-center justify-between">
             <div class="flex items-center">
-                <a href="{{ route('admin.points') }}" class="text-gray-600 hover:text-gray-800 mr-4">
+                <a href="{{ route('admin.coupons.index') }}" class="text-gray-600 hover:text-gray-800 mr-4">
                     <i class="fas fa-arrow-left text-xl"></i>
                 </a>
                 <div>
@@ -308,7 +308,7 @@
                                id="calle" 
                                value="{{ old('calle') }}"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('calle') border-red-500 @enderror"
-                               required
+                               
                                maxlength="200">
                         @error('calle')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -324,7 +324,7 @@
                                id="numero" 
                                value="{{ old('numero') }}"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('numero') border-red-500 @enderror"
-                               required
+                               
                                maxlength="20">
                         @error('numero')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -376,7 +376,7 @@
 
             <!-- Botones de acción -->
             <div class="flex items-center justify-between pt-6 border-t">
-                <a href="{{ route('admin.points') }}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                <a href="{{ route('admin.coupons.index') }}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
                     <i class="fas fa-times mr-2"></i>
                     Cancelar
                 </a>

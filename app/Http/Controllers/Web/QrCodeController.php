@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\Usuario;
 use Illuminate\Http\Request;
 
 class QrCodeController extends Controller
@@ -161,5 +162,75 @@ class QrCodeController extends Controller
         return response($imageData)
             ->header('Content-Type', 'image/png')
             ->header('Cache-Control', 'public, max-age=3600');
+    }
+
+    /**
+     * Generar código QR de identificación para un usuario.
+     * La imagen puede ser escaneada en sucursal para localizar al cliente.
+     */
+    public function generateUserQr(string $qr_codigo)
+    {
+        // Verificar que el código pertenece a un usuario válido
+        $usuario = Usuario::where('qr_codigo', $qr_codigo)->first();
+
+        if (!$usuario) {
+            abort(404, 'Código QR no válido.');
+        }
+
+        $qrContent = urlencode('ZRZ|' . $qr_codigo);
+        $size = '220x220';
+        $url = "https://api.qrserver.com/v1/create-qr-code/?size={$size}&data={$qrContent}&bgcolor=ffffff&color=71398d&margin=10";
+
+        $context = stream_context_create([
+            'http' => [
+                'timeout' => 5,
+                'user_agent' => 'La Zarza Contigo/1.0'
+            ]
+        ]);
+
+        $imageData = @file_get_contents($url, false, $context);
+
+        if ($imageData !== false && strlen($imageData) > 100) {
+            return response($imageData)
+                ->header('Content-Type', 'image/png')
+                ->header('Cache-Control', 'public, max-age=3600');
+        }
+
+        return $this->generatePlaceholderQr($qr_codigo);
+    }
+
+    /**
+     * Escanear QR de usuario en sucursal (GET).
+     * El admin escanea el QR y obtiene el perfil del cliente.
+     */
+    public function scanUserQr(Request $request)
+    {
+        $codigo = $request->query('codigo');
+
+        if (!$codigo) {
+            return view('admin.scan-qr', ['usuario' => null, 'error' => null]);
+        }
+
+        // Limpiar el formato del scanner: 'ZRZ|CODIGO' o solo 'CODIGO'
+        if (str_starts_with($codigo, 'ZRZ|')) {
+            $codigo = substr($codigo, 4);
+        }
+
+        $usuario = Usuario::where('qr_codigo', $codigo)
+            ->with(['puntos', 'cuponesAsignados' => function ($q) {
+                $q->where('estado', 'asignado')->with('cupon');
+            }, 'compras' => function ($q) {
+                $q->orderByDesc('fecha_compra')->limit(5);
+            }])
+            ->first();
+
+        if (!$usuario) {
+            return view('admin.scan-qr', [
+                'usuario' => null,
+                'error' => 'No se encontró ningún cliente con ese código QR.',
+            ]);
+        }
+
+        return view('admin.scan-qr', ['usuario' => $usuario, 'error' => null]);
     }
 }

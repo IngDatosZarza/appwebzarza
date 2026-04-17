@@ -38,7 +38,7 @@ if ($dbHelperPath && file_exists($dbHelperPath)) {
                     </h1>
                     <div class="hidden md:ml-6 md:flex md:space-x-8">
                         <a href="/" class="text-white hover:text-yellow-300 px-3 py-2 rounded-md text-sm font-medium">
-                            <i class="fas fa-home mr-1"></i> Dashboard
+                            <i class="fas fa-home mr-1"></i> Inicio
                         </a>
                         <a href="/transactions" class="text-white hover:text-yellow-300 px-3 py-2 rounded-md text-sm font-medium">
                             <i class="fas fa-history mr-1"></i> Transacciones

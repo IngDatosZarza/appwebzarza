@@ -13,7 +13,7 @@
                 </span>
                 Mis Compras
             </h1>
-            <p class="text-gray-600 mt-2">Consulta el historial de compras que has registrado y los puntos generados.</p>
+            <p class="text-gray-600 mt-2">Consulta el historial de compras que has registrado.</p>
         </div>
         <a href="{{ route('tickets.create') }}" class="btn-primary text-white px-5 py-3 rounded-lg shadow-sm inline-flex items-center gap-2">
             <i class="fas fa-receipt"></i>
@@ -22,7 +22,7 @@
     </div>
 
     <!-- Resumen -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="text-sm text-gray-500">Total de compras</div>
             <div class="mt-2 text-3xl font-bold text-gray-900">{{ number_format($stats['total_compras'] ?? 0) }}</div>
@@ -30,13 +30,6 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="text-sm text-gray-500">Monto acumulado</div>
             <div class="mt-2 text-3xl font-bold text-gray-900">$ {{ number_format($stats['total_monto'] ?? 0, 2) }}</div>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div class="text-sm text-gray-500">Puntos generados</div>
-            <div class="mt-2 text-3xl font-bold text-purple-600 flex items-center gap-2">
-                <i class="fas fa-coins"></i>
-                {{ number_format($stats['total_puntos'] ?? 0) }}
-            </div>
         </div>
     </div>
 
@@ -53,7 +46,7 @@
                     <i class="fas fa-shopping-basket text-2xl"></i>
                 </div>
                 <h3 class="text-lg font-semibold text-gray-900 mb-2">Aún no registras compras</h3>
-                <p class="text-gray-500 mb-6">Registra tus compras para comenzar a acumular puntos.</p>
+                <p class="text-gray-500 mb-6">Registra tus tickets de compra para llevar tu historial.</p>
                 <a href="{{ route('tickets.create') }}" class="btn-primary text-white px-5 py-3 rounded-lg shadow-sm inline-flex items-center gap-2">
                     <i class="fas fa-plus"></i>
                     Registrar ticket
@@ -68,7 +61,6 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sucursal</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Monto</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Puntos</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Método de pago</th>
                         </tr>
                     </thead>
@@ -86,9 +78,6 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
                                     $ {{ number_format($compra->monto ?? 0, 2) }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-purple-600">
-                                    +{{ number_format($compra->puntos_generados ?? 0) }} pts
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                     {{ $compra->metodo_pago ?? 'No especificado' }}

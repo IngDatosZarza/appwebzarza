@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="container mx-auto px-4 py-8">
-    <!-- Header con Puntos -->
+    <!-- Header -->
     <div class="bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg shadow-lg p-8 mb-8 text-white">
         <div class="flex items-center justify-between">
             <div>
@@ -12,14 +12,7 @@
                     <i class="fas fa-ticket-alt mr-3"></i>
                     Cupones La Zarza Contigo
                 </h1>
-                <p class="text-purple-100 text-lg">Canjea tus puntos por increíbles descuentos y ofertas</p>
-            </div>
-            <div class="text-center">
-                <div class="bg-white bg-opacity-20 rounded-lg p-4">
-                    <i class="fas fa-coins text-3xl mb-2"></i>
-                    <div class="text-2xl font-bold">{{ number_format($saldo_puntos) }}</div>
-                    <div class="text-sm text-purple-200">Puntos disponibles</div>
-                </div>
+                <p class="text-purple-100 text-lg">Descubre ofertas y beneficios exclusivos para miembros</p>
             </div>
         </div>
     </div>
@@ -56,12 +49,6 @@
                                         <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ $cupon['nombre'] }}</h3>
                                         <p class="text-sm text-gray-600 line-clamp-3">{{ $cupon['descripcion'] }}</p>
                                     </div>
-                                    <div class="ml-4">
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
-                                            <i class="fas fa-coins mr-1"></i>
-                                            {{ number_format($cupon['puntos_requeridos']) }}
-                                        </span>
-                                    </div>
                                 </div>
 
                                 <!-- Fecha de vigencia -->
@@ -84,23 +71,14 @@
                                             <i class="fas fa-info-circle mr-1"></i>
                                             Ya canjeaste este cupón anteriormente
                                         </p>
-                                    @elseif($saldo_puntos >= $cupon['puntos_requeridos'])
+                                    @else
                                         <!-- Puede canjear -->
                                         <button 
-                                            onclick="canjearCupon({{ $cupon['id'] }}, '{{ $cupon['nombre'] }}', {{ $cupon['puntos_requeridos'] }})"
+                                            onclick="canjearCupon({{ $cupon['id'] }}, '{{ $cupon['nombre'] }}')"
                                             class="w-full zarza-bg hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200">
                                             <i class="fas fa-exchange-alt mr-2"></i>
-                                            Canjear Cupón
+                                            Obtener Cupón
                                         </button>
-                                    @else
-                                        <!-- Puntos insuficientes -->
-                                        <button disabled class="w-full bg-gray-300 text-gray-500 font-medium py-3 px-4 rounded-lg cursor-not-allowed">
-                                            <i class="fas fa-lock mr-2"></i>
-                                            Puntos insuficientes
-                                        </button>
-                                        <p class="text-xs text-red-600 mt-2 text-center">
-                                            Te faltan {{ number_format($cupon['puntos_requeridos'] - $saldo_puntos) }} puntos
-                                        </p>
                                     @endif
                                 </div>
                             </div>
@@ -162,10 +140,6 @@
                                                  style="width: 80px; height: 80px;">
                                         </div>
                                         
-                                        <div class="bg-purple-100 rounded-lg p-2 mb-3">
-                                            <div class="text-xs text-purple-600">{{ number_format($cupon['puntos_requeridos']) }} pts</div>
-                                        </div>
-                                        
                                         @if($cupon['estado'] === 'disponible')
                                             <a href="{{ route('coupons.show', $cupon['id']) }}" 
                                                class="inline-flex items-center text-purple-600 hover:text-purple-800 text-sm font-medium">
@@ -205,8 +179,8 @@
                     <i class="fas fa-coins text-blue-600"></i>
                 </div>
                 <div>
-                    <div class="font-medium mb-1">1. Canjea tus puntos</div>
-                    <div>Usa tus puntos La Zarza Contigo para obtener cupones de descuento</div>
+                    <div class="font-medium mb-1">1. Canjea tus cupones</div>
+                    <div>Usa La Zarza Contigo para obtener cupones de descuento</div>
                 </div>
             </div>
             <div class="flex items-start">
@@ -289,11 +263,9 @@
 </style>
 
 <script>
-let currentSaldoPuntos = {{ $saldo_puntos }};
-
-function canjearCupon(cuponId, cuponNombre, puntosRequeridos) {
+function canjearCupon(cuponId, cuponNombre) {
     // Confirmar canje
-    if (!confirm(`¿Estás seguro de que deseas canjear "${cuponNombre}"?\n\nSe descontarán ${puntosRequeridos.toLocaleString()} puntos de tu saldo.`)) {
+    if (!confirm(`¿Estás seguro de que deseas obtener el cupón "${cuponNombre}"?`)) {
         return;
     }
 
@@ -312,21 +284,13 @@ function canjearCupon(cuponId, cuponNombre, puntosRequeridos) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Actualizar saldo de puntos
-            currentSaldoPuntos = data.nuevo_saldo;
-            
             // Mostrar modal con el cupón
             mostrarCuponCanjeado(data.cupon);
             
             // Lanzar confetti
             lanzarConfetti();
-            
-            // Recargar la página después de cerrar el modal para actualizar la lista
-            setTimeout(() => {
-                // Solo si el usuario cierra el modal
-            }, 1000);
         } else {
-            alert(data.message || 'Error al canjear el cupón');
+            alert(data.message || 'Error al obtener el cupón');
             cerrarModal();
         }
     })
@@ -390,17 +354,6 @@ function mostrarCuponCanjeado(cupon) {
                 ${cupon.nombre}
             </h4>
             <p class="text-sm text-gray-600 mb-3">${cupon.descripcion}</p>
-            
-            <div class="grid grid-cols-2 gap-3 text-sm">
-                <div class="bg-gray-50 rounded p-2">
-                    <div class="text-gray-500 text-xs">Puntos utilizados</div>
-                    <div class="font-bold text-purple-600">${cupon.puntos_requeridos.toLocaleString()}</div>
-                </div>
-                <div class="bg-gray-50 rounded p-2">
-                    <div class="text-gray-500 text-xs">Nuevo saldo</div>
-                    <div class="font-bold text-green-600">${currentSaldoPuntos.toLocaleString()}</div>
-                </div>
-            </div>
         </div>
 
         <!-- Instrucciones -->

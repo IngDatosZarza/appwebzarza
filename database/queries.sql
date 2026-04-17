@@ -60,7 +60,7 @@ ORDER BY c.created_at DESC;
 SELECT 
     u.nombres || ' ' || u.apellido_paterno as usuario,
     tp.tipo,
-    tp.puntos,
+    tp.puntos,o
     tp.descripcion,
     tp.created_at::date as fecha
 FROM transacciones_puntos tp

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Gestión de Transacciones de Puntos')
+@section('title', 'Gestión de Transacciones')
 
 @section('content')
 <div class="space-y-6">
@@ -10,7 +10,7 @@
             <div>
                 <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                     <i class="fas fa-exchange-alt mr-3"></i>
-                    Transacciones de Puntos
+                    Transacciones
                 </h1>
                 <p class="text-gray-600 mt-2">Gestiona y supervisa todas las transacciones del sistema</p>
             </div>
@@ -46,7 +46,7 @@
         <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-green-100 text-sm font-medium">Puntos Generados</p>
+                    <p class="text-green-100 text-sm font-medium">Total Generado</p>
                     <p class="text-3xl font-bold">{{ number_format($estadisticas['puntos_generados']) }}</p>
                 </div>
                 <div class="bg-green-400 bg-opacity-30 rounded-full p-3">
@@ -58,7 +58,7 @@
         <div class="bg-gradient-to-r from-red-500 to-red-600 rounded-lg shadow-lg p-6 text-white">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-red-100 text-sm font-medium">Puntos Utilizados</p>
+                    <p class="text-red-100 text-sm font-medium">Total Utilizado</p>
                     <p class="text-3xl font-bold">{{ number_format($estadisticas['puntos_utilizados']) }}</p>
                 </div>
                 <div class="bg-red-400 bg-opacity-30 rounded-full p-3">
@@ -89,17 +89,17 @@
                     {{ number_format($estadisticas['total_compras']) }}
                 </span>
             </div>
-            <p class="text-gray-600 text-sm">Puntos generados por compras de clientes</p>
+            <p class="text-gray-600 text-sm">Generados por compras de clientes</p>
         </div>
 
         <div class="bg-white rounded-lg shadow-sm p-6">
             <div class="flex items-center justify-between mb-2">
-                <h3 class="text-lg font-semibold text-gray-900">🎫 Canjes</h3>
+                <h3 class="text-lg font-semibold text-gray-900">🎟️ Canjes</h3>
                 <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
                     {{ number_format($estadisticas['total_canjes']) }}
                 </span>
             </div>
-            <p class="text-gray-600 text-sm">Puntos utilizados en canjes de cupones</p>
+            <p class="text-gray-600 text-sm">Utilizados en canjes de cupones</p>
         </div>
 
         <div class="bg-white rounded-lg shadow-sm p-6">
@@ -193,7 +193,7 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Puntos</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registrado Por</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>

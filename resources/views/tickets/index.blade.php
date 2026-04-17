@@ -55,32 +55,6 @@
                 </div>
             </div>
 
-            <!-- Puntos Ganados -->
-            <div class="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl shadow-lg p-6 text-white card-hover">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-green-100 text-sm font-medium">Puntos Ganados</p>
-                        <p class="text-3xl font-bold">{{ number_format($estadisticas['puntos_totales']) }}</p>
-                    </div>
-                    <div class="text-4xl opacity-75">
-                        <i class="fas fa-coins"></i>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Saldo Actual -->
-            <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white card-hover">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-purple-100 text-sm font-medium">Saldo Actual</p>
-                        <p class="text-3xl font-bold">{{ number_format($estadisticas['saldo_actual']) }}</p>
-                    </div>
-                    <div class="text-4xl opacity-75">
-                        <i class="fas fa-wallet"></i>
-                    </div>
-                </div>
-            </div>
-
             <!-- Monto Total -->
             <div class="bg-gradient-to-r from-orange-500 to-red-600 rounded-xl shadow-lg p-6 text-white card-hover">
                 <div class="flex items-center justify-between">
@@ -119,9 +93,6 @@
                                     Monto
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Puntos
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Fecha
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -158,12 +129,6 @@
                                     <div class="text-sm font-medium text-gray-900">
                                         ${{ number_format($ticket->monto, 2) }}
                                     </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                                        <i class="fas fa-plus mr-1"></i>
-                                        {{ $ticket->puntos_generados }}
-                                    </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-900">

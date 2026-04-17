@@ -40,10 +40,10 @@ CREATE TABLE IF NOT EXISTS clientes_api_lazarza (
     closed BOOLEAN DEFAULT FALSE,
     
     -- Campos de registro y auditoría
-    registration_channel VARCHAR(50) DEFAULT 'WEB' COMMENT 'Canal de registro: WEB, POS, PHONE, API, MANUAL',
-    registered_by_user_id BIGINT COMMENT 'ID del usuario que realizó el registro (si aplica)',
-    registration_ip VARCHAR(45) COMMENT 'IP desde donde se registró el cliente',
-    registration_user_agent TEXT COMMENT 'User-Agent del navegador/dispositivo (si aplica)',
+    registration_channel VARCHAR(50) DEFAULT 'WEB',
+    registered_by_user_id BIGINT,
+    registration_ip VARCHAR(45),
+    registration_user_agent TEXT,
     
     -- Timestamps de auditoría
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

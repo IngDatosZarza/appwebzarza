@@ -114,6 +114,10 @@ if (!function_exists('has_error')) {
      * Verificar si existe un error para un campo específico
      */
     function has_error($field) {
+        // Primero: errores de Laravel (via puente global)
+        if (!empty($GLOBALS['_laravel_form_errors'][$field])) {
+            return true;
+        }
         $errors = get_errors();
         return isset($errors[$field]);
     }
@@ -124,6 +128,11 @@ if (!function_exists('get_error')) {
      * Obtener el primer error de un campo específico
      */
     function get_error($field) {
+        // Primero: errores de Laravel (via puente global)
+        if (!empty($GLOBALS['_laravel_form_errors'][$field])) {
+            $err = $GLOBALS['_laravel_form_errors'][$field];
+            return is_array($err) ? $err[0] : $err;
+        }
         $errors = get_errors();
         if (isset($errors[$field])) {
             return is_array($errors[$field]) ? $errors[$field][0] : $errors[$field];

@@ -19,7 +19,7 @@ class CouponController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Cupon::where('activo', true);
+            $query = Cupon::whereRaw('"activo" = true');
 
             // Filtros opcionales
             if ($request->has('puntos_requeridos_max')) {
@@ -131,12 +131,6 @@ class CouponController extends Controller
                 'cupon_id' => $cupon->id,
                 'codigo_qr' => 'QR_' . strtoupper(uniqid()),
                 'estado' => 'asignado',
-                'fecha_asignacion' => now(),
-                'fecha_vencimiento' => $cupon->fecha_vencimiento,
-            ]);
-
-            // Reducir cantidad disponible
-            $cupon->decrement('cantidad_disponible');
 
             // Registrar en auditoría
             DB::table('auditoria')->insert([
@@ -183,7 +177,7 @@ class CouponController extends Controller
         try {
             $cupones = CuponAsignado::with('cupon')
                                   ->where('usuario_id', $userId)
-                                  ->orderBy('fecha_asignacion', 'desc')
+                                  ->orderBy('created_at', 'desc')
                                   ->get();
 
             return response()->json([

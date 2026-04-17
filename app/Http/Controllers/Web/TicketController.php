@@ -6,8 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Compra;
 use App\Models\Sucursal;
 use App\Models\Usuario;
-use App\Models\TransaccionPuntos;
-use App\Models\Puntos;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -26,10 +24,6 @@ class TicketController extends Controller
 
         $sucursales = Sucursal::orderBy('nombre')->get();
         
-        // Obtener saldo actual del usuario
-        $puntosUsuario = Auth::user()->puntos;
-        $saldoActual = $puntosUsuario ? $puntosUsuario->saldo : 0;
-        
         // Obtener últimas compras del usuario
         $ultimasCompras = Auth::user()->compras()
             ->with('sucursal')
@@ -37,7 +31,7 @@ class TicketController extends Controller
             ->limit(5)
             ->get();
 
-        return view('tickets.create', compact('sucursales', 'saldoActual', 'ultimasCompras'));
+        return view('tickets.create', compact('sucursales', 'ultimasCompras'));
     }
 
     /**
@@ -78,48 +72,24 @@ class TicketController extends Controller
             $usuario = Auth::user();
             $monto = $request->monto;
             
-            // Calcular puntos (100 puntos fijos por ticket registrado)
-            $puntosGenerados = 100;
-            
             // Crear la compra/ticket
             $compra = Compra::create([
                 'usuario_id' => $usuario->id,
                 'sucursal_id' => $request->sucursal_id,
                 'monto' => $monto,
                 'numero_ticket' => $request->numero_ticket,
-                'puntos_generados' => $puntosGenerados,
+                'puntos_generados' => 0,
                 'descripcion' => $request->descripcion ?: "Ticket #{$request->numero_ticket}",
                 'metodo_pago' => $request->metodo_pago,
                 'fecha_compra' => $request->fecha_compra ? $request->fecha_compra : now(),
                 'creado_por' => $usuario->id,
             ]);
 
-            // Actualizar o crear registro de puntos del usuario
-            $puntos = $usuario->puntos()->firstOrCreate([
-                'usuario_id' => $usuario->id
-            ], [
-                'saldo' => 0,
-            ]);
-
-            $saldoAnterior = $puntos->saldo;
-            $puntos->update([
-                'saldo' => $puntos->saldo + $puntosGenerados,
-            ]);
-
-            // Registrar transacción de puntos
-            TransaccionPuntos::create([
-                'usuario_id' => $usuario->id,
-                'tipo' => 'compra',
-                'puntos' => $puntosGenerados,
-                'descripcion' => "Puntos por ticket #{$request->numero_ticket} - {$compra->sucursal->nombre}",
-                'registrado_por' => $usuario->id,
-            ]);
-
             DB::commit();
 
             return redirect()
                 ->route('tickets.index')
-                ->with('success', "¡Ticket registrado exitosamente! Has ganado {$puntosGenerados} puntos.");
+                ->with('success', '¡Ticket registrado exitosamente!');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -146,9 +116,7 @@ class TicketController extends Controller
         // Estadísticas del usuario
         $estadisticas = [
             'total_tickets' => Auth::user()->compras()->count(),
-            'puntos_totales' => Auth::user()->compras()->sum('puntos_generados'),
             'monto_total' => Auth::user()->compras()->sum('monto'),
-            'saldo_actual' => Auth::user()->puntos ? Auth::user()->puntos->saldo : 0,
         ];
 
         return view('tickets.index', compact('tickets', 'estadisticas'));
@@ -180,20 +148,6 @@ class TicketController extends Controller
         return response()->json([
             'exists' => $exists,
             'message' => $exists ? 'Este número de ticket ya ha sido registrado' : 'Número de ticket disponible'
-        ]);
-    }
-
-    /**
-     * Obtener información de puntos para mostrar en tiempo real
-     */
-    public function calculatePoints(Request $request)
-    {
-        // Siempre 100 puntos por ticket
-        $puntosAGanar = 100;
-        
-        return response()->json([
-            'puntos_a_ganar' => $puntosAGanar,
-            'mensaje' => "Ganarás {$puntosAGanar} puntos por registrar este ticket"
         ]);
     }
 }

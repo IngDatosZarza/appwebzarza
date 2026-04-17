@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'oppen' => [
+        'base_url' => env('OPPEN_API_BASE_URL', 'https://opercompruebausa.oppen.io/genericapi/fidelizaciontest'),
+        'bearer_token' => env('OPPEN_API_BEARER_TOKEN', ''),
+    ],
+
 ];

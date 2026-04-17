@@ -36,7 +36,7 @@ class CouponService
                 $join->on('cupones.id', '=', 'cupones_asignados.cupon_id')
                      ->where('cupones_asignados.usuario_id', '=', $userId);
             })
-            ->where('cupones.activo', true)
+            ->whereRaw('"cupones"."activo" = true')
             ->whereDate('cupones.fecha_inicio', '<=', DB::raw('CURRENT_DATE'))
             ->whereDate('cupones.fecha_fin', '>=', DB::raw('CURRENT_DATE'))
             ->orderBy('cupones.puntos_requeridos', 'ASC')
@@ -86,7 +86,7 @@ class CouponService
     {
         // Verificar que el cupón existe y está disponible
         $cupon = Cupon::where('id', $cuponId)
-            ->where('activo', true)
+            ->whereRaw('"activo" = true')
             ->whereDate('fecha_inicio', '<=', DB::raw('CURRENT_DATE'))
             ->whereDate('fecha_fin', '>=', DB::raw('CURRENT_DATE'))
             ->first();
@@ -199,7 +199,7 @@ class CouponService
     public function getCouponStats(): array
     {
         return [
-            'total_cupones_activos' => Cupon::where('activo', true)->count(),
+            'total_cupones_activos' => Cupon::whereRaw('"activo" = true')->count(),
             'total_cupones_asignados' => CuponAsignado::count(),
             'cupones_mes_actual' => CuponAsignado::where('created_at', '>=', DB::raw("DATE_TRUNC('month', CURRENT_DATE)"))->count(),
             'cupones_usados' => CuponAsignado::where('estado', 'usado')->count(),

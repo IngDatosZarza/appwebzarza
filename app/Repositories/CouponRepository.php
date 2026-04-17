@@ -30,7 +30,7 @@ class CouponRepository
      */
     public function getAllActive(): Collection
     {
-        return Cupon::where('activo', true)
+        return Cupon::whereRaw('"activo" = true')
             ->whereDate('fecha_inicio', '<=', DB::raw('CURRENT_DATE'))
             ->whereDate('fecha_fin', '>=', DB::raw('CURRENT_DATE'))
             ->orderBy('puntos_requeridos', 'ASC')

@@ -101,7 +101,6 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cupón</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Puntos</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vigencia</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estadísticas</th>
@@ -116,12 +115,6 @@
                                         <div class="text-sm font-medium text-gray-900">{{ $cupon['nombre'] }}</div>
                                         <div class="text-sm text-gray-500">{{ Str::limit($cupon['descripcion'], 60) }}</div>
                                     </div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                        <i class="fas fa-coins mr-1"></i>
-                                        {{ number_format($cupon['puntos_requeridos']) }}
-                                    </span>
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="text-sm text-gray-900">
@@ -183,7 +176,6 @@
                                         <button class="btn-assign text-green-600 hover:text-green-900 transition-colors"
                                                 data-id="{{ $cupon['id'] }}"
                                                 data-name="{{ $cupon['nombre'] }}"
-                                                data-points="{{ $cupon['puntos_requeridos'] }}"
                                                 title="Asignar a cliente">
                                             <i class="fas fa-user-plus"></i>
                                         </button>
@@ -243,10 +235,6 @@
                     <div class="mb-4 p-3 bg-purple-50 rounded-lg">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Cupón seleccionado:</label>
                         <p id="couponName" class="text-gray-900 font-medium"></p>
-                        <p class="text-sm text-gray-600">
-                            <i class="fas fa-coins mr-1"></i>
-                            <span id="couponPoints"></span> puntos requeridos
-                        </p>
                     </div>
                     
                     <div class="mb-4">
@@ -257,19 +245,15 @@
                                 required>
                             <option value="">-- Selecciona un cliente --</option>
                             @foreach($clientes as $cliente)
-                                <option value="{{ $cliente['id'] }}" data-puntos="{{ $cliente['puntos'] }}">
-                                    {{ $cliente['nombre_completo'] }} ({{ $cliente['email'] }}) - {{ number_format($cliente['puntos']) }} puntos
+                                <option value="{{ $cliente['id'] }}">
+                                    {{ $cliente['nombre_completo'] }} ({{ $cliente['email'] }})
                                 </option>
                             @endforeach
                         </select>
                     </div>
                     
                     <div id="clienteInfo" class="mb-4 p-3 bg-blue-50 rounded-lg hidden">
-                        <h4 class="text-sm font-medium text-blue-800 mb-2">Información del cliente:</h4>
-                        <div class="text-sm text-blue-700">
-                            <div id="clientePuntos"></div>
-                            <div id="clienteEstado" class="mt-1"></div>
-                        </div>
+                        <h4 class="text-sm font-medium text-blue-800 mb-2">Cliente seleccionado</h4>
                     </div>
                     
                     <div class="flex justify-end space-x-3">
@@ -355,11 +339,9 @@
 <script>
 let currentCouponPoints = 0;
 
-function openAssignModal(couponId, couponName, couponPoints) {
-    currentCouponPoints = couponPoints;
+function openAssignModal(couponId, couponName) {
     document.getElementById('assignModal').classList.remove('hidden');
     document.getElementById('couponName').textContent = couponName;
-    document.getElementById('couponPoints').textContent = new Intl.NumberFormat().format(couponPoints);
     document.getElementById('assignForm').action = `/admin/cupones/${couponId}/asignar`;
 }
 
@@ -376,8 +358,7 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', function() {
             const id = this.dataset.id;
             const name = this.dataset.name;
-            const points = this.dataset.points;
-            openAssignModal(id, name, points);
+            openAssignModal(id, name);
         });
     });
 
@@ -399,34 +380,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Manejar cambio de cliente seleccionado
     const usuarioSelect = document.getElementById('usuario_id');
     const clienteInfo = document.getElementById('clienteInfo');
-    const clientePuntos = document.getElementById('clientePuntos');
-    const clienteEstado = document.getElementById('clienteEstado');
     const submitBtn = document.getElementById('submitBtn');
     
     usuarioSelect.addEventListener('change', function() {
         if (this.value) {
-            const option = this.options[this.selectedIndex];
-            const puntos = parseInt(option.dataset.puntos);
-            
             clienteInfo.classList.remove('hidden');
-            clientePuntos.innerHTML = `<i class="fas fa-coins mr-1"></i>Puntos disponibles: ${new Intl.NumberFormat().format(puntos)}`;
-            
-            if (puntos >= currentCouponPoints) {
-                clienteEstado.innerHTML = `<i class="fas fa-check-circle text-green-600 mr-1"></i>El cliente tiene suficientes puntos`;
-                clienteEstado.className = 'mt-1 text-green-700';
-                submitBtn.disabled = false;
-                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            } else {
-                const faltan = currentCouponPoints - puntos;
-                clienteEstado.innerHTML = `<i class="fas fa-exclamation-triangle text-red-600 mr-1"></i>Faltan ${new Intl.NumberFormat().format(faltan)} puntos`;
-                clienteEstado.className = 'mt-1 text-red-700';
-                submitBtn.disabled = true;
-                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            }
         } else {
             clienteInfo.classList.add('hidden');
-            submitBtn.disabled = false;
-            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         }
     });
 });

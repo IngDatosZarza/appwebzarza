@@ -327,13 +327,12 @@
                 $compras = $pdo->query('SELECT COUNT(*) FROM compras')->fetchColumn() ?: 0;
                 $cupones = $pdo->query('SELECT COUNT(*) FROM cupones WHERE activo = true')->fetchColumn() ?: 0;
                 $sucursales = $pdo->query('SELECT COUNT(*) FROM sucursales WHERE activo = true')->fetchColumn() ?: 0;
-                $puntos_total = $pdo->query('SELECT SUM(saldo) FROM puntos')->fetchColumn() ?: 0;
             } catch (Exception $e) {
-                $usuarios = $compras = $cupones = $sucursales = $puntos_total = 0;
+                $usuarios = $compras = $cupones = $sucursales = 0;
             }
         @endphp
         
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-6">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div class="text-center">
                 <div class="text-3xl font-bold text-blue-600">{{ number_format($usuarios) }}</div>
                 <div class="text-sm text-gray-600 mt-1">Usuarios Registrados</div>
@@ -349,10 +348,6 @@
             <div class="text-center">
                 <div class="text-3xl font-bold text-orange-600">{{ number_format($sucursales) }}</div>
                 <div class="text-sm text-gray-600 mt-1">Sucursales Activas</div>
-            </div>
-            <div class="text-center">
-                <div class="text-3xl font-bold text-yellow-600">{{ number_format($puntos_total) }}</div>
-                <div class="text-sm text-gray-600 mt-1">Puntos en Circulación</div>
             </div>
         </div>
     </div>

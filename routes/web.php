@@ -5,6 +5,7 @@ use App\Http\Controllers\Web\TransactionController;
 use App\Http\Controllers\Web\NotificationController;
 use App\Http\Controllers\Web\BranchesController;
 use App\Http\Controllers\Web\CatalogController;
+use App\Http\Controllers\Web\DireccionController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 
@@ -51,6 +52,10 @@ Route::middleware('custom.auth')->group(function () {
     Route::get('/perfil', [DashboardController::class, 'profile'])->name('profile.show');
     Route::put('/perfil', [DashboardController::class, 'updateProfile'])->name('profile.update');
     
+    // Dirección del usuario
+    Route::get('/api/direccion/principal', [DireccionController::class, 'getDireccionPrincipal'])->name('direccion.principal');
+    Route::put('/perfil/direccion', [DireccionController::class, 'updateDireccionPrincipal'])->name('direccion.update');
+    
     // Cupones del usuario
     Route::get('/mis-cupones', [DashboardController::class, 'myCoupons'])->name('coupons.my');
     Route::post('/cupones/canjear', [DashboardController::class, 'redeemCoupon'])->name('coupons.redeem');
@@ -59,12 +64,6 @@ Route::middleware('custom.auth')->group(function () {
     
     // Compras
     Route::get('/compras', [DashboardController::class, 'purchases'])->name('purchases.index');
-    
-    // Puntos
-    Route::get('/puntos/historial', [DashboardController::class, 'pointsHistory'])->name('points.history');
-    
-    // Rutas de administración (solo para admins)
-    Route::get('/admin/points', [TransactionController::class, 'adminPanel'])->name('admin.points');
     
 });
 
@@ -89,7 +88,6 @@ Route::middleware('custom.auth')->group(function () {
     Route::post('/tickets', [\App\Http\Controllers\Web\TicketController::class, 'store'])->name('tickets.store');
     Route::get('/tickets/{id}', [\App\Http\Controllers\Web\TicketController::class, 'show'])->name('tickets.show');
     Route::get('/tickets/check-ticket', [\App\Http\Controllers\Web\TicketController::class, 'checkTicket'])->name('tickets.check');
-    Route::get('/tickets/calculate-points', [\App\Http\Controllers\Web\TicketController::class, 'calculatePoints'])->name('tickets.calculate');
 });
 
 // Rutas de cupones para clientes
@@ -108,10 +106,6 @@ Route::middleware(['custom.auth', 'admin'])->prefix('admin')->group(function () 
     Route::post('/cupones/{id}/asignar', [\App\Http\Controllers\Web\CouponsController::class, 'assign'])->name('admin.coupons.assign');
     Route::get('/cupones/{id}/asignaciones', [\App\Http\Controllers\Web\CouponsController::class, 'getAssignments'])->name('admin.coupons.assignments');
     
-    // Rutas de transacciones de puntos
-    Route::get('/transacciones', [\App\Http\Controllers\Web\DashboardController::class, 'showTransactions'])->name('admin.transactions');
-    Route::get('/transacciones/exportar', [\App\Http\Controllers\Web\DashboardController::class, 'exportTransactions'])->name('admin.transactions.export');
-    
     // Rutas de validación de cupones QR
     Route::get('/validar-cupones', [\App\Http\Controllers\Web\CouponValidationController::class, 'showValidationForm'])->name('admin.coupons.validate');
     Route::post('/cupones/validar', [\App\Http\Controllers\Web\CouponValidationController::class, 'validateCoupon'])->name('admin.coupons.validate.check');
@@ -122,8 +116,19 @@ Route::middleware(['custom.auth', 'admin'])->prefix('admin')->group(function () 
     Route::post('/clientes/registrar', [\App\Http\Controllers\Web\AuthController::class, 'adminRegisterClient'])->name('admin.clients.store');
 });
 
-// Ruta para generar códigos QR (accesible públicamente)
+// Rutas de código QR - cupones y usuario
 Route::get('/qr/cupon/{codigo_qr}', [\App\Http\Controllers\Web\QrCodeController::class, 'generateCouponQr'])->name('qr.coupon');
+Route::get('/qr/usuario/{qr_codigo}', [\App\Http\Controllers\Web\QrCodeController::class, 'generateUserQr'])->name('qr.usuario');
+
+// Mi Tarjeta QR (requiere autenticación del cliente)
+Route::middleware('custom.auth')->group(function () {
+    Route::get('/mi-tarjeta', [\App\Http\Controllers\Web\DashboardController::class, 'miTarjeta'])->name('client.mi-tarjeta');
+});
+
+// Escaneo de QR de cliente en sucursal (requiere admin)
+Route::middleware(['custom.auth', 'admin'])->prefix('admin')->group(function () {
+    Route::get('/escanear-cliente', [\App\Http\Controllers\Web\QrCodeController::class, 'scanUserQr'])->name('admin.qr.scan');
+});
 
 // Rutas de notificaciones
 Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');

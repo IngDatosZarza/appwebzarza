@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Panel de Administración - Sistema de Puntos')
+@section('title', 'Panel de Administración')
 
 @section('content')
 <div class="space-y-6">
@@ -12,7 +12,7 @@
                     <i class="fas fa-shield-alt text-red-500 mr-3"></i>
                     Panel de Administración
                 </h1>
-                <p class="text-gray-600 mt-2">Gestión y estadísticas del sistema de puntos de fidelidad</p>
+                <p class="text-gray-600 mt-2">Gestión y estadísticas del sistema de fidelidad</p>
                 <div class="mt-2">
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                         <i class="fas fa-crown mr-1"></i>
@@ -44,7 +44,7 @@
         <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg shadow-sm p-6 text-white">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-green-100 text-sm font-medium">Puntos en Circulación</p>
+                    <p class="text-green-100 text-sm font-medium">Actividad Total</p>
                     <p class="text-3xl font-bold">{{ number_format($stats['total_points'] ?? 0) }}</p>
                 </div>
                 <div class="text-green-200">
@@ -134,7 +134,7 @@
                     <i class="fas fa-trophy text-yellow-500 mr-2"></i>
                     Usuarios Top
                 </h2>
-                <span class="text-sm text-gray-500">Por puntos acumulados</span>
+                <span class="text-sm text-gray-500">Por actividad acumulada</span>
             </div>
             
             <div class="space-y-3">

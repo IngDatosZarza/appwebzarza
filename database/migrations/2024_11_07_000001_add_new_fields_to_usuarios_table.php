@@ -12,14 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('usuarios', function (Blueprint $table) {
-            // Agregar nuevos campos
-            $table->string('rfc', 13)->unique()->nullable()->after('fecha_nacimiento');
-            $table->timestamp('email_verified_at')->nullable()->after('email');
-            $table->boolean('club_zarza')->default(true)->after('rol');
-            $table->string('oppen_customer_id')->nullable()->unique()->after('club_zarza');
-            
-            // Modificar campos existentes para que sean NOT NULL
-            // Nota: Solo en producción, primero llenar con valores por defecto
+            if (!Schema::hasColumn('usuarios', 'rfc')) {
+                $table->string('rfc', 13)->unique()->nullable()->after('fecha_nacimiento');
+            }
+            if (!Schema::hasColumn('usuarios', 'email_verified_at')) {
+                $table->timestamp('email_verified_at')->nullable()->after('email');
+            }
+            if (!Schema::hasColumn('usuarios', 'club_zarza')) {
+                $table->boolean('club_zarza')->default(true)->after('rol');
+            }
+            if (!Schema::hasColumn('usuarios', 'oppen_customer_id')) {
+                $table->string('oppen_customer_id')->nullable()->unique()->after('club_zarza');
+            }
         });
         
         // Agregar índices únicos a telefono si no existen

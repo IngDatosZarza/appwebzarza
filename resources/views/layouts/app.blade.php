@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'La Zarza Contigo - Sistema de Puntos de Fidelidad')</title>
+    <title>@yield('title', 'La Zarza Contigo')</title>
     <link rel="icon" type="image/png" href="/logozarza.png">
     
     <!-- Tailwind CSS -->
@@ -17,6 +17,18 @@
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     
     <style>
+        @font-face {
+            font-family: 'Androgyne';
+            src: url('/fonts/Androgyne_TB.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        .font-androgyne {
+            font-family: 'Androgyne', sans-serif;
+        }
+
         /* Colores personalizados */
         .navbar-gradient {
             background: linear-gradient(135deg, #b51a8a 0%, #d63a9e 100%);
@@ -71,25 +83,27 @@
                 <div class="flex items-center min-w-0">
                     <div class="flex-shrink-0 flex items-center">
                         <img src="/logoZarza.webp" alt="La Zarza Contigo" class="h-10 w-auto mr-2">
-                        <h1 class="text-white text-lg font-bold whitespace-nowrap">La Zarza Contigo</h1>
+                        <h1 class="text-white text-lg font-bold whitespace-nowrap font-androgyne">La Zarza Contigo</h1>
                     </div>
                     <div class="hidden md:ml-6 md:flex md:items-center md:space-x-1">
                         <a href="{{ route('dashboard') }}" class="text-white hover:text-pink-200 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                            <i class="fas fa-home mr-1"></i> Dashboard
+                            <i class="fas fa-home mr-1"></i> Inicio
                         </a>
-                        <a href="{{ route('catalog.index') }}" class="text-white hover:text-pink-200 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                        @if(Session::get('user_rol') !== 'admin')
+                        <a href="https://lazarza.com.mx/productos?category=PASTELES" target="_blank" class="text-white hover:text-pink-200 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                             <i class="fas fa-book mr-1"></i> Catálogo
                         </a>
+                        <a href="https://momentoslazarza.com/pasteles-eventos/" target="_blank" rel="noopener noreferrer" class="text-white hover:text-pink-200 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                            <i class="fas fa-birthday-cake mr-1"></i> Eventos
+                        </a>
+                        @endif
                         @if(Session::get('user_authenticated', false))
-                            <a href="{{ route('tickets.index') }}" class="text-white hover:text-pink-200 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                                <i class="fas fa-receipt mr-1"></i> Tickets
-                            </a>
-                            <a href="{{ route('purchases.index') }}" class="text-white hover:text-pink-200 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                                <i class="fas fa-shopping-cart mr-1"></i> Compras
-                            </a>
+                            @if(Session::get('user_rol') !== 'admin')
+                            
                             <a href="{{ route('coupons.index') }}" class="text-white hover:text-pink-200 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                                 <i class="fas fa-ticket-alt mr-1"></i> Cupones
                             </a>
+                            @endif
                             @if(Session::get('user_rol') === 'admin')
                                 <div class="relative" x-data="{ open: false }">
                                     <button @click="open = !open" class="text-white hover:text-pink-200 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
@@ -97,14 +111,8 @@
                                         <i class="fas fa-chevron-down ml-1 text-xs"></i>
                                     </button>
                                     <div x-show="open" @click.away="open = false" x-transition class="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                                        <a href="/admin/points" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            <i class="fas fa-coins mr-2"></i> Gestión Puntos
-                                        </a>
-                                        <a href="{{ route('admin.coupons.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                        <a href="{{ route('admin.coupons.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                             <i class="fas fa-ticket-alt mr-2"></i> Gestión Cupones
-                                        </a>
-                                        <a href="{{ route('admin.transactions') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            <i class="fas fa-exchange-alt mr-2"></i> Transacciones
                                         </a>
                                         <a href="{{ route('admin.clients.create') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                             <i class="fas fa-user-plus mr-2"></i> Registrar Cliente
@@ -116,14 +124,9 @@
                     </div>
                 </div>
 
-                <!-- Área derecha: puntos + usuario (escritorio) + hamburguesa (móvil) -->
+                <!-- Área derecha: usuario (escritorio) + hamburguesa (móvil) -->
                 <div class="flex items-center space-x-2">
                     @if(Session::get('user_authenticated', false))
-                        <!-- Puntos (solo escritorio) -->
-                        <div class="hidden md:flex items-center text-white text-sm mr-1">
-                            <i class="fas fa-coins text-pink-200 mr-1"></i>
-                            <span class="font-semibold">{{ Session::get('user_puntos', 0) }} pts</span>
-                        </div>
                         <!-- Menú de usuario (escritorio) -->
                         <div class="hidden md:block relative" x-data="{ open: false }">
                             <button @click="open = !open" class="flex items-center text-white hover:text-pink-200 focus:outline-none">
@@ -139,15 +142,12 @@
                                 <a href="{{ route('profile.show') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     <i class="fas fa-user mr-2"></i> Mi Perfil
                                 </a>
-                                <a href="{{ route('tickets.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <i class="fas fa-receipt mr-2"></i> Mis Tickets
-                                </a>
+                                @if(Session::get('user_rol') !== 'admin')
+                                
                                 <a href="{{ route('coupons.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     <i class="fas fa-ticket-alt mr-2"></i> Mis Cupones
                                 </a>
-                                <a href="/points/history" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <i class="fas fa-history mr-2"></i> Historial de Puntos
-                                </a>
+                                @endif
                                 <div class="border-t border-gray-100"></div>
                                 <form method="POST" action="/logout">
                                     @csrf
@@ -184,10 +184,16 @@
                 <a href="{{ route('dashboard') }}" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
                     <i class="fas fa-home w-5 mr-2"></i> Dashboard
                 </a>
+                @if(Session::get('user_rol') !== 'admin')
                 <a href="{{ route('catalog.index') }}" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
                     <i class="fas fa-book w-5 mr-2"></i> Catálogo
                 </a>
+                <a href="https://momentoslazarza.com/pasteles-eventos/" target="_blank" rel="noopener noreferrer" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
+                    <i class="fas fa-birthday-cake w-5 mr-2"></i> Eventos
+                </a>
+                @endif
                 @if(Session::get('user_authenticated', false))
+                    @if(Session::get('user_rol') !== 'admin')
                     <a href="{{ route('tickets.index') }}" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
                         <i class="fas fa-receipt w-5 mr-2"></i> Tickets
                     </a>
@@ -197,17 +203,12 @@
                     <a href="{{ route('coupons.index') }}" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
                         <i class="fas fa-ticket-alt w-5 mr-2"></i> Cupones
                     </a>
+                    @endif
                     @if(Session::get('user_rol') === 'admin')
                         <div class="border-t border-white border-opacity-20 pt-2 mt-2">
                             <p class="px-3 py-1 text-pink-200 text-xs font-semibold uppercase tracking-wide">Administración</p>
-                            <a href="/admin/points" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
-                                <i class="fas fa-coins w-5 mr-2"></i> Gestión Puntos
-                            </a>
                             <a href="{{ route('admin.coupons.index') }}" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
                                 <i class="fas fa-ticket-alt w-5 mr-2"></i> Gestión Cupones
-                            </a>
-                            <a href="{{ route('admin.transactions') }}" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
-                                <i class="fas fa-exchange-alt w-5 mr-2"></i> Transacciones
                             </a>
                             <a href="{{ route('admin.clients.create') }}" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
                                 <i class="fas fa-user-plus w-5 mr-2"></i> Registrar Cliente
@@ -219,13 +220,10 @@
                         <div class="px-3 py-2 text-pink-100 text-sm">
                             <div class="font-medium">{{ Session::get('user_nombre', 'Usuario') }} {{ Session::get('user_apellido', '') }}</div>
                             <div class="text-xs opacity-75">{{ Session::get('user_email', '') }}</div>
-                            <div class="mt-1"><i class="fas fa-coins mr-1"></i> {{ Session::get('user_puntos', 0) }} puntos</div>
+
                         </div>
                         <a href="{{ route('profile.show') }}" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
                             <i class="fas fa-user w-5 mr-2"></i> Mi Perfil
-                        </a>
-                        <a href="/points/history" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
-                            <i class="fas fa-history w-5 mr-2"></i> Historial de Puntos
                         </a>
                         <form method="POST" action="/logout">
                             @csrf
@@ -248,23 +246,59 @@
         </div>
     </nav>
 
-    <!-- Flash Messages -->
-    @if(session('success'))
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4" role="alert">
-                <i class="fas fa-check-circle mr-2"></i>
-                {{ session('success') }}
+    <!-- Flash Messages (Toast) -->
+    @if(session('success') || session('error'))
+    <div id="toast-container" class="fixed top-20 right-4 z-50 flex flex-col gap-3 pointer-events-none" style="max-width: 380px;">
+        @if(session('success'))
+        <div id="toast-success"
+             class="pointer-events-auto flex items-start gap-3 px-5 py-4 rounded-2xl shadow-2xl text-white transition-all duration-500 opacity-100 translate-y-0"
+             style="background: linear-gradient(135deg, #b51a8a 0%, #71398d 100%); box-shadow: 0 8px 32px rgba(181,26,138,0.45);">
+            <div class="flex-shrink-0 mt-0.5">
+                <div class="w-8 h-8 rounded-full bg-white bg-opacity-25 flex items-center justify-center">
+                    <i class="fas fa-check text-white text-sm"></i>
+                </div>
             </div>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
-                <i class="fas fa-exclamation-circle mr-2"></i>
-                {{ session('error') }}
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium leading-snug">{{ session('success') }}</p>
             </div>
+            <button onclick="dismissToast('toast-success')" class="flex-shrink-0 text-white text-opacity-70 hover:text-opacity-100 transition-opacity ml-1">
+                <i class="fas fa-times text-xs"></i>
+            </button>
         </div>
+        @endif
+        @if(session('error'))
+        <div id="toast-error"
+             class="pointer-events-auto flex items-start gap-3 px-5 py-4 rounded-2xl shadow-2xl text-white transition-all duration-500 opacity-100 translate-y-0"
+             style="background: linear-gradient(135deg, #dc2626 0%, #9f1239 100%); box-shadow: 0 8px 32px rgba(220,38,38,0.4);">
+            <div class="flex-shrink-0 mt-0.5">
+                <div class="w-8 h-8 rounded-full bg-white bg-opacity-25 flex items-center justify-center">
+                    <i class="fas fa-exclamation text-white text-sm"></i>
+                </div>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium leading-snug">{{ session('error') }}</p>
+            </div>
+            <button onclick="dismissToast('toast-error')" class="flex-shrink-0 text-white text-opacity-70 hover:text-opacity-100 transition-opacity ml-1">
+                <i class="fas fa-times text-xs"></i>
+            </button>
+        </div>
+        @endif
+    </div>
+    <script>
+        function dismissToast(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(-12px)';
+            setTimeout(() => el.remove(), 500);
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            ['toast-success', 'toast-error'].forEach(function(id) {
+                const el = document.getElementById(id);
+                if (el) setTimeout(() => dismissToast(id), 4500);
+            });
+        });
+    </script>
     @endif
 
     <!-- Main Content -->
@@ -278,15 +312,15 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div>
                     <h3 class="text-lg font-semibold mb-4">
-                        <i class="fas fa-gem text-pink-200 mr-2"></i>
-                        La Zarza Contigo
+                        <img src="/logoZarza.webp" alt="La Zarza Contigo" class="h-8 w-auto inline-block mr-2">
+                        <h1 class="text-white text-lg font-bold whitespace-nowrap font-androgyne">La Zarza Contigo</h1>
                     </h3>
-                    <p class="text-gray-200">Sistema de puntos de fidelidad para recompensar a nuestros clientes más valiosos.</p>
+                    <p class="text-gray-200">La Zarza Contigo: Celebramos tu preferencia con beneficios pensados especialmente para ti</p>
                 </div>
                 <div>
                     <h4 class="text-md font-semibold mb-4">Enlaces Rápidos</h4>
                     <ul class="space-y-2">
-                        <li><a href="{{ route('dashboard') }}" class="text-gray-200 hover:text-pink-200 transition-colors">Dashboard</a></li>
+                        <li><a href="{{ route('dashboard') }}" class="text-gray-200 hover:text-pink-200 transition-colors">Inicio</a></li>
                         <li><a href="{{ route('coupons.index') }}" class="text-gray-200 hover:text-pink-200 transition-colors">Cupones</a></li>
                         <li><a href="{{ route('branches.index') }}" class="text-gray-200 hover:text-pink-200 transition-colors">Sucursales</a></li>                        <li><a href="https://lazarza.com.mx/aviso-de-privacidad" target="_blank" rel="noopener noreferrer" class="text-gray-200 hover:text-pink-200 transition-colors">Aviso de Privacidad</a></li>                    </ul>
                 </div>

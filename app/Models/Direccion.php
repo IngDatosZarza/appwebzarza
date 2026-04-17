@@ -59,7 +59,7 @@ class Direccion extends Model
     // Scopes
     public function scopePrincipales($query)
     {
-        return $query->where('principal', true);
+        return $query->whereRaw('principal = true');
     }
 
     public function scopePorTipo($query, $tipo)

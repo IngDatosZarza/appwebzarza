@@ -65,6 +65,14 @@ return [
             'transport' => 'resend',
         ],
 
+        'microsoft-graph' => [
+            'transport'     => 'microsoft-graph',
+            'client_id'     => env('MSGRAPH_CLIENT_ID'),
+            'client_secret' => env('MSGRAPH_CLIENT_SECRET'),
+            'tenant_id'     => env('MSGRAPH_TENANT_ID'),
+            'from_email'    => env('MSGRAPH_FROM_EMAIL', env('MAIL_FROM_ADDRESS')),
+        ],
+
         'sendmail' => [
             'transport' => 'sendmail',
             'path' => env('MAIL_SENDMAIL_PATH', '/usr/sbin/sendmail -bs -i'),

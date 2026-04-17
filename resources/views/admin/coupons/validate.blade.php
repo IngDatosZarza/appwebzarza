@@ -195,7 +195,6 @@ function showValidationResult(data, codigoQr) {
                         <div><strong>Cupón:</strong> ${data.data.cupon_nombre}</div>
                         <div><strong>Cliente:</strong> ${data.data.cliente_nombre}</div>
                         <div><strong>Email:</strong> ${data.data.cliente_email}</div>
-                        <div><strong>Puntos utilizados:</strong> ${data.data.puntos_utilizados}</div>
                         <div><strong>Fecha canje:</strong> ${data.data.fecha_canje}</div>
                         <div><strong>Código QR:</strong> <code class="bg-gray-100 px-2 py-1 rounded">${data.data.codigo_qr}</code></div>
                     </div>

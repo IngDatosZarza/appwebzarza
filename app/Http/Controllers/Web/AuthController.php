@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Usuario;
 use App\Models\Direccion;
-use App\Models\Puntos;
 use App\Models\CodigoPostal;
 use App\Models\Auditoria;
+use App\Services\OppenApiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\WelcomeMail;
 
 class AuthController extends Controller
 {
@@ -71,16 +73,11 @@ class AuthController extends Controller
             Session::put('user_apellido', $usuario->apellido_paterno);
             Session::put('user_rol', $usuario->rol);
 
-            // Obtener puntos del usuario usando relación Eloquent
-            $puntos = $usuario->puntos;
-            $saldoPuntos = $puntos ? $puntos->saldo : 0;
-            Session::put('user_puntos', $saldoPuntos);
-
             // Redirigir según el rol del usuario
             if ($usuario->rol === 'admin') {
-                return redirect('/admin/points')->with('success', '✅ ¡Bienvenido al Panel de Administración, ' . $usuario->nombres . '!');
+                return redirect()->route('admin.coupons.index')->with('success', '✅ ¡Bienvenido al Panel de Administración, ' . $usuario->nombres . '!');
             } else {
-                return redirect()->intended('/')->with('success', '✅ ¡Bienvenido de vuelta, ' . $usuario->nombres . '! Tienes ' . number_format($saldoPuntos) . ' puntos disponibles.');
+                return redirect()->intended('/')->with('success', '✅ ¡Bienvenido de vuelta, ' . $usuario->nombres . '!');
             }
 
         } catch (\Exception $e) {
@@ -137,7 +134,7 @@ class AuthController extends Controller
                 'before:-18 years',
             ],
             'rfc' => [
-                'required',
+                'nullable',
                 'string',
                 'regex:/^[A-ZÑ&]{3,4}[0-9]{6}[A-Z0-9]{3}$/',
                 'size:13',
@@ -150,8 +147,13 @@ class AuthController extends Controller
             'municipio' => 'required|string',
             'codigo_postal_id' => 'required|exists:codigos_postales,id',
             'colonia' => 'required|string',
-            'calle' => 'required|string|max:200',
-            'numero' => 'required|string|max:20',
+            'calle' => 'nullable|string|max:200',
+            'numero' => 'nullable|string|max:20',
+
+            // Campos opcionales
+            'genero' => 'nullable|in:masculino,femenino,otro',
+            'promo_email' => 'nullable|boolean',
+            'promo_whatsapp' => 'nullable|boolean',
         ], [
             'nombres.required' => 'El nombre es obligatorio.',
             'apellido_paterno.required' => 'El apellido paterno es obligatorio.',
@@ -165,7 +167,6 @@ class AuthController extends Controller
             'telefono.unique' => 'Este número de teléfono ya está registrado.',
             'fecha_nacimiento.required' => 'La fecha de nacimiento es obligatoria.',
             'fecha_nacimiento.before' => 'Debes ser mayor de 18 años para registrarte.',
-            'rfc.required' => 'El RFC es obligatorio.',
             'rfc.regex' => 'El RFC no tiene un formato válido.',
             'rfc.size' => 'El RFC debe tener 13 caracteres.',
             'rfc.unique' => 'Este RFC ya está registrado.',
@@ -174,8 +175,6 @@ class AuthController extends Controller
             'estado.required' => 'El estado es obligatorio.',
             'municipio.required' => 'El municipio es obligatorio.',
             'colonia.required' => 'La colonia es obligatoria.',
-            'calle.required' => 'La calle es obligatoria.',
-            'numero.required' => 'El número es obligatorio.',
         ]);
 
         if ($validator->fails()) {
@@ -187,22 +186,83 @@ class AuthController extends Controller
         error_log("=== VALIDACIÓN EXITOSA ===");
 
         try {
-            // VALIDACIÓN CON SISTEMA OPPEN
-            $clienteExisteEnOppen = $this->verificarClienteEnOppen($request->email, $request->telefono, $request->rfc);
-            
-            if ($clienteExisteEnOppen) {
-                if ($clienteExisteEnOppen['tiene_club_zarza']) {
-                    return back()->withErrors([
-                        'email' => 'Ya estás registrado en Club Zarza. Por favor, inicia sesión.'
-                    ])->withInput()->with('error', '❌ Este cliente ya pertenece a Club Zarza.');
-                }
-                return $this->actualizarClienteOppen($request, $clienteExisteEnOppen['oppen_id']);
+            $oppenService = new OppenApiService();
+
+            // Auto-generar RFC a partir de nombre, apellidos y fecha de nacimiento
+            $rfcAutoGenerado = OppenApiService::calcularRFC(
+                $request->nombres,
+                $request->apellido_paterno,
+                $request->apellido_materno,
+                $request->fecha_nacimiento
+            );
+
+            error_log("RFC Auto-generado: {$rfcAutoGenerado}");
+
+            // Obtener datos del código postal para dirección
+            $cpData = CodigoPostal::find($request->codigo_postal_id);
+
+            // Preparar datos para la API Oppen y la BD local
+            $datosCliente = [
+                'nombres'          => $request->nombres,
+                'apellido_paterno' => $request->apellido_paterno,
+                'apellido_materno' => $request->apellido_materno,
+                'email'            => $request->email,
+                'telefono'         => $request->telefono,
+                'fecha_nacimiento' => $request->fecha_nacimiento,
+                'rfc'              => $rfcAutoGenerado,
+                'genero'           => $request->genero,
+                'estado'           => $cpData->estado ?? $request->estado,
+                'municipio'        => $cpData->municipio ?? $request->municipio,
+                'colonia'          => $request->colonia,
+                'calle'            => $request->calle ?? 'Sin especificar',
+                'promo_email'      => $request->boolean('promo_email'),
+                'promo_whatsapp'   => $request->boolean('promo_whatsapp'),
+            ];
+
+            // 1) Verificar si el cliente ya existe en el ERP Oppen
+            $clienteEnOppen = $oppenService->verificarClienteExistente(
+                $request->email,
+                $request->telefono,
+                $rfcAutoGenerado
+            );
+
+            // También verificar en la BD local
+            $clienteLocal = Usuario::where('email', $request->email)
+                ->orWhere('telefono', $request->telefono)
+                ->first();
+
+            if ($clienteLocal && $clienteLocal->club_zarza) {
+                return back()->withErrors([
+                    'email' => 'Ya estás registrado en Club Zarza. Por favor, inicia sesión.'
+                ])->withInput()->with('error', '❌ Este cliente ya pertenece a Club Zarza.');
             }
-            
-            // Cliente nuevo - crear en ambos sistemas usando transacción
+
+            $oppenCustomerCode = null;
+
+            if ($clienteEnOppen) {
+                // Cliente ya existe en Oppen, usar su código
+                $oppenCustomerCode = $clienteEnOppen['code'];
+                error_log("Cliente encontrado en Oppen: {$oppenCustomerCode} (por {$clienteEnOppen['por']})");
+            } else {
+                // 2) Crear cliente nuevo en la API Oppen
+                $resultadoOppen = $oppenService->crearCliente($datosCliente);
+
+                if ($resultadoOppen['success']) {
+                    $oppenCustomerCode = $resultadoOppen['code'];
+                    error_log("Cliente creado en Oppen: {$oppenCustomerCode}");
+                } else {
+                    // Registrar el error pero continuar con el registro local
+                    Log::warning('No se pudo crear cliente en Oppen, se continuará solo con registro local', [
+                        'email' => $request->email,
+                        'error' => $resultadoOppen['error'] ?? 'Error desconocido',
+                    ]);
+                    error_log("Error creando cliente en Oppen: " . ($resultadoOppen['error'] ?? 'Error desconocido'));
+                }
+            }
+
+            // 3) Crear usuario en la base de datos local
             DB::beginTransaction();
 
-            // Crear usuario
             $usuario = Usuario::create([
                 'nombres' => $request->nombres,
                 'apellido_paterno' => $request->apellido_paterno,
@@ -210,33 +270,28 @@ class AuthController extends Controller
                 'email' => $request->email,
                 'telefono' => $request->telefono,
                 'fecha_nacimiento' => $request->fecha_nacimiento,
-                'rfc' => strtoupper($request->rfc),
+                'rfc' => $rfcAutoGenerado,
                 'password' => Hash::make($request->password),
+                'genero' => $request->genero,
+                'promo_email' => $request->boolean('promo_email') ? 't' : 'f',
+                'promo_whatsapp' => $request->boolean('promo_whatsapp') ? 't' : 'f',
                 'rol' => 'cliente',
-                'club_zarza' => true
+                'club_zarza' => 't',
+                'oppen_customer_id' => $oppenCustomerCode,
             ]);
 
-            // Obtener datos del código postal
-            $cpData = CodigoPostal::find($request->codigo_postal_id);
-
-            // Crear dirección
+            // Crear dirección (usar valores por defecto si no se proporcionan calle/numero)
             Direccion::create([
                 'usuario_id' => $usuario->id,
-                'calle' => $request->calle,
-                'numero' => $request->numero,
+                'calle' => $request->calle ?? 'Sin especificar',
+                'numero' => $request->numero ?? 'S/N',
                 'codigo_postal_id' => $request->codigo_postal_id,
                 'codigo_postal' => $cpData->codigo_postal,
                 'estado' => $cpData->estado,
                 'municipio' => $cpData->municipio,
                 'colonia' => $request->colonia,
                 'pais' => 'México',
-                'principal' => true
-            ]);
-
-            // Crear registro de puntos inicial
-            Puntos::create([
-                'usuario_id' => $usuario->id,
-                'saldo' => 0
+                'principal' => 't'
             ]);
 
             // Registrar en auditoría
@@ -248,6 +303,8 @@ class AuthController extends Controller
                 'cambios' => json_encode([
                     'accion' => 'registro_usuario',
                     'email' => $request->email,
+                    'rfc_autogenerado' => $rfcAutoGenerado,
+                    'oppen_customer_code' => $oppenCustomerCode,
                     'ip' => $request->ip(),
                     'user_agent' => $request->userAgent()
                 ])
@@ -258,9 +315,18 @@ class AuthController extends Controller
             error_log("=== USUARIO CREADO EXITOSAMENTE ===");
             error_log("Usuario ID: {$usuario->id}");
             error_log("Email: " . $request->email);
+            error_log("RFC: {$rfcAutoGenerado}");
+            error_log("Oppen Code: " . ($oppenCustomerCode ?? 'N/A'));
 
-            // Enviar email de verificación
-            $this->enviarEmailVerificacion($usuario->id, $request->email, $request->nombres);
+            // Enviar correo de bienvenida
+            try {
+                Mail::to($usuario->email)->send(new WelcomeMail($usuario));
+            } catch (\Exception $e) {
+                Log::warning('No se pudo enviar el correo de bienvenida', [
+                    'user_id' => $usuario->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
 
             // Crear notificación de bienvenida
             try {
@@ -337,7 +403,7 @@ class AuthController extends Controller
             Usuario::where('oppen_customer_id', $oppenId)
                 ->orWhere('id', $oppenId)
                 ->update([
-                    'club_zarza' => true,
+                    'club_zarza' => 't',
                     'password' => Hash::make($request->password)
                 ]);
             
@@ -357,33 +423,6 @@ class AuthController extends Controller
     }
 
     /**
-     * Enviar email de verificación al usuario
-     */
-    private function enviarEmailVerificacion($userId, $email, $nombre)
-    {
-        // TODO: Implementar envío de email real
-        // Por ahora, solo registrar en log
-        
-        $token = bin2hex(random_bytes(32));
-        
-        // Guardar token en base de datos (temporal)
-        try {
-            // Aquí deberías guardar el token en una tabla de verificaciones
-            // Por ahora, lo registramos en el log
-            
-            Log::info('Email de verificación generado', [
-                'user_id' => $userId,
-                'email' => $email,
-                'token' => $token,
-                'verification_url' => url("/verify-email/{$userId}/{$token}")
-            ]);
-            
-        } catch (\Exception $e) {
-            Log::error('Error guardando token de verificación', ['error' => $e->getMessage()]);
-        }
-    }
-
-    /**
      * Cerrar sesión del usuario
      */
     public function logout(Request $request)
@@ -398,7 +437,7 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         // Limpiar variables personalizadas
-        Session::forget(['user_authenticated', 'user_id', 'user_email', 'user_nombre', 'user_apellido', 'user_rol', 'user_puntos']);
+        Session::forget(['user_authenticated', 'user_id', 'user_email', 'user_nombre', 'user_apellido', 'user_rol']);
 
         return redirect('/')->with('success', '✅ Has cerrado sesión correctamente. ¡Hasta pronto!');
     }
@@ -425,7 +464,6 @@ class AuthController extends Controller
             'email' => Session::get('user_email'),
             'nombre' => Session::get('user_nombre'),
             'rol' => Session::get('user_rol'),
-            'puntos' => Session::get('user_puntos'),
         ];
     }
 
@@ -477,7 +515,7 @@ class AuthController extends Controller
                 'before:-18 years',
             ],
             'rfc' => [
-                'required',
+                'nullable',
                 'string',
                 'regex:/^[A-ZÑ&]{3,4}[0-9]{6}[A-Z0-9]{3}$/',
                 'size:13',
@@ -490,8 +528,11 @@ class AuthController extends Controller
             'municipio' => 'required|string',
             'codigo_postal_id' => 'required|exists:codigos_postales,id',
             'colonia' => 'required|string',
-            'calle' => 'required|string|max:200',
-            'numero' => 'required|string|max:20',
+            'calle' => 'nullable|string|max:200',
+            'numero' => 'nullable|string|max:20',
+
+            // Campos opcionales
+            'genero' => 'nullable|in:masculino,femenino,otro',
         ], [
             'nombres.required' => 'El nombre es obligatorio.',
             'apellido_paterno.required' => 'El apellido paterno es obligatorio.',
@@ -505,7 +546,6 @@ class AuthController extends Controller
             'telefono.unique' => 'Este número de teléfono ya está registrado.',
             'fecha_nacimiento.required' => 'La fecha de nacimiento es obligatoria.',
             'fecha_nacimiento.before' => 'El cliente debe ser mayor de 18 años.',
-            'rfc.required' => 'El RFC es obligatorio.',
             'rfc.regex' => 'El RFC no tiene un formato válido.',
             'rfc.size' => 'El RFC debe tener 13 caracteres.',
             'rfc.unique' => 'Este RFC ya está registrado.',
@@ -514,8 +554,6 @@ class AuthController extends Controller
             'estado.required' => 'El estado es obligatorio.',
             'municipio.required' => 'El municipio es obligatorio.',
             'colonia.required' => 'La colonia es obligatoria.',
-            'calle.required' => 'La calle es obligatoria.',
-            'numero.required' => 'El número es obligatorio.',
         ]);
 
         if ($validator->fails()) {
@@ -526,6 +564,59 @@ class AuthController extends Controller
         }
 
         try {
+            $oppenService = new OppenApiService();
+
+            // Auto-generar RFC
+            $rfcAutoGenerado = OppenApiService::calcularRFC(
+                $request->nombres,
+                $request->apellido_paterno,
+                $request->apellido_materno,
+                $request->fecha_nacimiento
+            );
+
+            // Obtener datos del código postal
+            $cpDataAdmin = CodigoPostal::find($request->codigo_postal_id);
+
+            if (!$cpDataAdmin) {
+                throw new \Exception("Código postal no encontrado");
+            }
+
+            // Preparar datos para API Oppen
+            $datosCliente = [
+                'nombres'          => $request->nombres,
+                'apellido_paterno' => $request->apellido_paterno,
+                'apellido_materno' => $request->apellido_materno,
+                'email'            => $request->email,
+                'telefono'         => $request->telefono,
+                'fecha_nacimiento' => $request->fecha_nacimiento,
+                'rfc'              => $rfcAutoGenerado,
+                'genero'           => $request->genero,
+                'estado'           => $cpDataAdmin->estado,
+                'municipio'        => $cpDataAdmin->municipio,
+                'colonia'          => $request->colonia,
+                'calle'            => $request->calle ?? 'Sin especificar',
+                'promo_email'      => $request->boolean('promo_email'),
+                'promo_whatsapp'   => $request->boolean('promo_whatsapp'),
+            ];
+
+            // Crear cliente en API Oppen
+            $oppenCustomerCode = null;
+            $clienteEnOppen = $oppenService->verificarClienteExistente($request->email, $request->telefono, $rfcAutoGenerado);
+
+            if ($clienteEnOppen) {
+                $oppenCustomerCode = $clienteEnOppen['code'];
+            } else {
+                $resultadoOppen = $oppenService->crearCliente($datosCliente);
+                if ($resultadoOppen['success']) {
+                    $oppenCustomerCode = $resultadoOppen['code'];
+                } else {
+                    Log::warning('Admin: No se pudo crear cliente en Oppen', [
+                        'email' => $request->email,
+                        'error' => $resultadoOppen['error'] ?? 'Error desconocido',
+                    ]);
+                }
+            }
+
             DB::beginTransaction();
 
             // Crear usuario
@@ -536,37 +627,26 @@ class AuthController extends Controller
                 'email' => $request->email,
                 'telefono' => $request->telefono,
                 'fecha_nacimiento' => $request->fecha_nacimiento,
-                'rfc' => strtoupper($request->rfc),
+                'rfc' => $rfcAutoGenerado,
                 'password' => Hash::make($request->password),
+                'genero' => $request->genero,
                 'rol' => 'cliente',
-                'club_zarza' => true
+                'club_zarza' => 't',
+                'oppen_customer_id' => $oppenCustomerCode,
             ]);
 
-            // Obtener datos del código postal
-            $cpData = CodigoPostal::find($request->codigo_postal_id);
-
-            if (!$cpData) {
-                throw new \Exception("Código postal no encontrado");
-            }
-
-            // Crear dirección
+            // Crear dirección (usar valores por defecto si no se proporcionan calle/numero)
             Direccion::create([
                 'usuario_id' => $usuario->id,
-                'calle' => $request->calle,
-                'numero' => $request->numero,
+                'calle' => $request->calle ?? 'Sin especificar',
+                'numero' => $request->numero ?? 'S/N',
                 'codigo_postal_id' => $request->codigo_postal_id,
-                'codigo_postal' => $cpData->codigo_postal,
-                'estado' => $cpData->estado,
-                'municipio' => $cpData->municipio,
+                'codigo_postal' => $cpDataAdmin->codigo_postal,
+                'estado' => $cpDataAdmin->estado,
+                'municipio' => $cpDataAdmin->municipio,
                 'colonia' => $request->colonia,
                 'pais' => 'México',
-                'principal' => true
-            ]);
-
-            // Crear registro de puntos inicial
-            Puntos::create([
-                'usuario_id' => $usuario->id,
-                'saldo' => 0
+                'principal' => 't'
             ]);
 
             // Registrar en auditoría
@@ -578,6 +658,8 @@ class AuthController extends Controller
                 'cambios' => json_encode([
                     'accion' => 'registro_cliente_por_admin',
                     'cliente_email' => $request->email,
+                    'rfc_autogenerado' => $rfcAutoGenerado,
+                    'oppen_customer_code' => $oppenCustomerCode,
                     'admin_id' => Session::get('user_id'),
                     'admin_email' => Session::get('user_email'),
                     'ip' => $request->ip(),
@@ -590,6 +672,8 @@ class AuthController extends Controller
             Log::info("Cliente creado exitosamente por admin", [
                 'cliente_id' => $usuario->id,
                 'cliente_email' => $request->email,
+                'rfc' => $rfcAutoGenerado,
+                'oppen_code' => $oppenCustomerCode,
                 'admin_id' => Session::get('user_id')
             ]);
 

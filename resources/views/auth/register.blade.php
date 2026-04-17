@@ -15,6 +15,11 @@ if ($helperPath && file_exists($helperPath)) {
         }
     }
 }
+
+// Puente: pasar errores de Laravel ($errors Blade) a las funciones helper nativas
+if (isset($errors) && $errors->any()) {
+    $GLOBALS['_laravel_form_errors'] = $errors->messages();
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -114,10 +119,43 @@ if ($helperPath && file_exists($helperPath)) {
             }
         }
 
+        // Auto-calcular RFC (réplica de calcRFC de lazarza_forms_advanced.php)
+        function calcRFC(n, a1, a2, bd) {
+            if (!n || !a1 || !bd) return '';
+            const skip  = ['DE','LA','LAS','MC','VON','DEL','LOS','Y','MAC'];
+            const clean = s => s.trim().toUpperCase().split(' ').filter(w => !skip.includes(w)).join(' ') || s.toUpperCase();
+            const vowel = s => { for (let i=1;i<s.length;i++) if('AEIOU'.includes(s[i])) return s[i]; return 'X'; };
+            a1 = clean(a1); a2 = clean(a2||''); n = n.trim().toUpperCase();
+            let r = a1[0] + vowel(a1) + (a2 ? a2[0] : 'X');
+            const pts = n.split(' ');
+            r += (['JOSE','MARIA','MA','MA.','J','J.'].includes(pts[0]) && pts.length > 1) ? pts[1][0] : pts[0][0];
+            const d = new Date(bd + 'T00:00:00');
+            r += String(d.getFullYear()).slice(-2) + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0') + 'XX0';
+            const bad = ['BUEI','BUEY','CACA','COGE','CULO','FETO','GUEY','JOTO','MEAR','MEON','PUTA','PUTO','RATA'];
+            return bad.includes(r.slice(0,4)) ? r[0]+'X'+r.slice(2) : r;
+        }
+
         // Cargar estados al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
             cargarEstados();
+
+            // Vincular auto-cálculo de RFC con los campos del formulario
+            const campos = ['nombres', 'apellido_paterno', 'apellido_materno', 'fecha_nacimiento'];
+            campos.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', actualizarRFC);
+            });
         });
+
+        function actualizarRFC() {
+            const n  = document.getElementById('nombres')?.value || '';
+            const a1 = document.getElementById('apellido_paterno')?.value || '';
+            const a2 = document.getElementById('apellido_materno')?.value || '';
+            const bd = document.getElementById('fecha_nacimiento')?.value || '';
+            const rfc = calcRFC(n, a1, a2, bd);
+            const rfcInput = document.getElementById('rfc');
+            if (rfcInput && rfc) rfcInput.value = rfc;
+        }
     </script>
     
     <style>
@@ -302,7 +340,7 @@ if ($helperPath && file_exists($helperPath)) {
                     </div>
 
                     <!-- RFC -->
-                    <div>
+                    <div hidden>
                         <label for="rfc" class="block text-sm font-medium text-gray-700 mb-2">
                             <i class="fas fa-id-card text-gray-400 mr-2"></i>
                             RFC
@@ -353,6 +391,30 @@ if ($helperPath && file_exists($helperPath)) {
                             <p class="mt-1 text-sm text-red-600">
                                 <i class="fas fa-exclamation-circle mr-1"></i>
                                 <?= htmlspecialchars(get_error('fecha_nacimiento')) ?>
+                            </p>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Género -->
+                    <div>
+                        <label for="genero" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-venus-mars text-gray-400 mr-2"></i>
+                            Género
+                        </label>
+                        <select
+                            id="genero"
+                            name="genero"
+                            class="form-input appearance-none relative block w-full px-3 py-3 border border-gray-300 text-gray-900 rounded-lg focus:outline-none zarza-ring focus:border-pink-500 sm:text-sm"
+                        >
+                            <option value="">Selecciona una opción</option>
+                            <option value="femenino" <?= old('genero') === 'femenino' ? 'selected' : '' ?>>Femenino</option>
+                            <option value="masculino" <?= old('genero') === 'masculino' ? 'selected' : '' ?>>Masculino</option>
+                            <option value="otro" <?= old('genero') === 'otro' ? 'selected' : '' ?>>Prefiero no especificar</option>
+                        </select>
+                        <?php if (has_error('genero')): ?>
+                            <p class="mt-1 text-sm text-red-600">
+                                <i class="fas fa-exclamation-circle mr-1"></i>
+                                <?= htmlspecialchars(get_error('genero')) ?>
                             </p>
                         <?php endif; ?>
                     </div>
@@ -437,52 +499,6 @@ if ($helperPath && file_exists($helperPath)) {
                                 </p>
                             <?php endif; ?>
                         </div>
-
-                        <!-- Calle -->
-                        <div>
-                            <label for="calle" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-road text-gray-400 mr-2"></i>
-                                Calle *
-                            </label>
-                            <input 
-                                id="calle" 
-                                name="calle" 
-                                type="text" 
-                                required
-                                class="form-input appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none zarza-ring focus:border-pink-500 sm:text-sm"
-                                placeholder="Av. Reforma"
-                                value="<?= htmlspecialchars(old('calle', '')) ?>"
-                            >
-                            <?php if (has_error('calle')): ?>
-                                <p class="mt-1 text-sm text-red-600">
-                                    <i class="fas fa-exclamation-circle mr-1"></i>
-                                    <?= htmlspecialchars(get_error('calle')) ?>
-                                </p>
-                            <?php endif; ?>
-                        </div>
-
-                        <!-- Número -->
-                        <div>
-                            <label for="numero" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-hashtag text-gray-400 mr-2"></i>
-                                Número *
-                            </label>
-                            <input 
-                                id="numero" 
-                                name="numero" 
-                                type="text" 
-                                required
-                                class="form-input appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none zarza-ring focus:border-pink-500 sm:text-sm"
-                                placeholder="123"
-                                value="<?= htmlspecialchars(old('numero', '')) ?>"
-                            >
-                            <?php if (has_error('numero')): ?>
-                                <p class="mt-1 text-sm text-red-600">
-                                    <i class="fas fa-exclamation-circle mr-1"></i>
-                                    <?= htmlspecialchars(get_error('numero')) ?>
-                                </p>
-                            <?php endif; ?>
-                        </div>
                     </div>
                 </div>
 
@@ -552,6 +568,42 @@ if ($helperPath && file_exists($helperPath)) {
                     </div>
                 </div>
 
+                <!-- Preferencias de comunicación -->
+                <div class="space-y-3">
+                    <p class="text-sm font-medium text-gray-700">
+                        <i class="fas fa-bell text-gray-400 mr-2"></i>
+                        Preferencias de comunicación
+                    </p>
+                    <div class="flex items-center">
+                        <input
+                            id="promo_email"
+                            name="promo_email"
+                            type="checkbox"
+                            value="1"
+                            <?= old('promo_email') ? 'checked' : '' ?>
+                            class="h-4 w-4 zarza-text zarza-ring border-gray-300 rounded"
+                        >
+                        <label for="promo_email" class="ml-2 block text-sm text-gray-700">
+                            <i class="fas fa-envelope text-pink-400 mr-1"></i>
+                            Deseo recibir promociones por Email
+                        </label>
+                    </div>
+                    <div class="flex items-center">
+                        <input
+                            id="promo_whatsapp"
+                            name="promo_whatsapp"
+                            type="checkbox"
+                            value="1"
+                            <?= old('promo_whatsapp') ? 'checked' : '' ?>
+                            class="h-4 w-4 zarza-text zarza-ring border-gray-300 rounded"
+                        >
+                        <label for="promo_whatsapp" class="ml-2 block text-sm text-gray-700">
+                            <i class="fab fa-whatsapp text-green-500 mr-1"></i>
+                            Deseo recibir promociones por WhatsApp
+                        </label>
+                    </div>
+                </div>
+
                 <!-- Terms and Conditions -->
                 <div class="flex items-center">
                     <input 
@@ -603,7 +655,7 @@ if ($helperPath && file_exists($helperPath)) {
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                 <div class="text-center">
                     <i class="fas fa-coins text-yellow-300 text-xl mb-2"></i>
-                    <p><strong>Gana Puntos</strong><br>1 punto por cada peso gastado</p>
+                    <p><strong>Gana Cupones</strong><br>Acumula cupones con cada compra</p>
                 </div>
                 <div class="text-center">
                     <i class="fas fa-ticket-alt text-green-300 text-xl mb-2"></i>
@@ -611,7 +663,7 @@ if ($helperPath && file_exists($helperPath)) {
                 </div>
                 <div class="text-center">
                     <i class="fas fa-trophy text-orange-300 text-xl mb-2"></i>
-                    <p><strong>Niveles VIP</strong><br>Beneficios premium</p>
+                    <p><strong>Recibe actualizaciones</strong><br>Conoce nuestras novedades y promociones</p>
                 </div>
             </div>
         </div>
@@ -620,7 +672,7 @@ if ($helperPath && file_exists($helperPath)) {
         <div class="text-center">
             <a href="/" class="inline-flex items-center text-white hover:text-pink-200 transition-colors">
                 <i class="fas fa-arrow-left mr-2"></i>
-                Volver al Dashboard
+                Volver al Inicio
             </a>
         </div>
     </div>

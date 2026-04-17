@@ -28,9 +28,19 @@ class Cupon extends Model
         return [
             'fecha_inicio' => 'date',
             'fecha_fin' => 'date',
-            'activo' => 'boolean',
             'puntos_requeridos' => 'integer',
         ];
+    }
+
+    // Forzar cast de booleano para PostgreSQL (PDO envía 1/0 en lugar de true/false)
+    public function setActivoAttribute($value)
+    {
+        $this->attributes['activo'] = $value ? 'true' : 'false';
+    }
+
+    public function getActivoAttribute($value)
+    {
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }
 
     // Relaciones
@@ -47,7 +57,7 @@ class Cupon extends Model
     // Scopes
     public function scopeActivos($query)
     {
-        return $query->where('activo', true);
+        return $query->whereRaw('"activo" = true');
     }
 
     public function scopeVigentes($query)

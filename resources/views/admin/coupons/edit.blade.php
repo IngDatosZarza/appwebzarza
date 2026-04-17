@@ -74,27 +74,6 @@
                     @enderror
                 </div>
 
-                <div>
-                    <label for="puntos_requeridos" class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-coins text-gray-400 mr-2"></i>
-                        Puntos Requeridos *
-                    </label>
-                    <input type="number" 
-                           id="puntos_requeridos" 
-                           name="puntos_requeridos" 
-                           value="{{ old('puntos_requeridos', $cupon['puntos_requeridos']) }}"
-                           min="1"
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                           placeholder="100"
-                           required>
-                    @error('puntos_requeridos')
-                        <p class="mt-1 text-sm text-red-600">
-                            <i class="fas fa-exclamation-circle mr-1"></i>
-                            {{ $message }}
-                        </p>
-                    @enderror
-                </div>
-
                 <div class="flex items-center pt-8">
                     <input type="checkbox" 
                            id="activo" 

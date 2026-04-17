@@ -18,25 +18,6 @@
             </div>
         </div>
 
-        <!-- Mensajes de éxito/error -->
-        @if(session('success'))
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6 relative">
-                <span class="block sm:inline">{{ session('success') }}</span>
-                <span class="absolute top-0 bottom-0 right-0 px-4 py-3">
-                    <i class="fas fa-check-circle"></i>
-                </span>
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6 relative">
-                <span class="block sm:inline">{{ session('error') }}</span>
-                <span class="absolute top-0 bottom-0 right-0 px-4 py-3">
-                    <i class="fas fa-exclamation-circle"></i>
-                </span>
-            </div>
-        @endif
-
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <!-- Información de la cuenta -->
             <div class="md:col-span-1">
@@ -56,24 +37,7 @@
                             <p class="text-sm text-gray-600">Email</p>
                             <p class="font-medium text-gray-900">{{ $user['email'] }}</p>
                         </div>
-                        
-                        <div>
-                            <p class="text-sm text-gray-600">Rol</p>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                {{ $user['rol'] === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800' }}">
-                                <i class="fas fa-{{ $user['rol'] === 'admin' ? 'crown' : 'user' }} mr-1"></i>
-                                {{ ucfirst($user['rol']) }}
-                            </span>
-                        </div>
-                        
-                        <div>
-                            <p class="text-sm text-gray-600">Puntos Actuales</p>
-                            <p class="font-bold text-2xl text-gradient-to-r from-pink-500 to-purple-600">
-                                <i class="fas fa-coins text-yellow-500 mr-1"></i>
-                                {{ number_format($user['puntos_saldo'] ?? 0) }} pts
-                            </p>
-                        </div>
-                        
+                                                
                         <div>
                             <p class="text-sm text-gray-600">Miembro desde</p>
                             <p class="font-medium text-gray-900">{{ date('d/m/Y', strtotime($user['created_at'])) }}</p>
@@ -186,7 +150,7 @@
                                 <input type="date" 
                                        id="fecha_nacimiento" 
                                        name="fecha_nacimiento" 
-                                       value="{{ old('fecha_nacimiento', $user['fecha_nacimiento']) }}"
+                                       value="{{ old('fecha_nacimiento', $user['fecha_nacimiento'] ? date('Y-m-d', strtotime($user['fecha_nacimiento'])) : '') }}"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 @error('fecha_nacimiento') border-red-500 @enderror">
                                 @error('fecha_nacimiento')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -194,8 +158,132 @@
                             </div>
                         </div>
 
+                        <!-- Dirección -->
+                        <div class="border-t border-gray-200 pt-6 mt-6">
+                            <h4 class="text-md font-semibold text-gray-900 mb-4">
+                                <i class="fas fa-map-marker-alt text-blue-500 mr-2"></i>
+                                Dirección Principal
+                            </h4>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="calle" class="block text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-road mr-1"></i>
+                                        Calle *
+                                    </label>
+                                    <input type="text" 
+                                           id="calle" 
+                                           name="calle" 
+                                           value="{{ old('calle', $direccion?->calle ?? '') }}"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 @error('calle') border-red-500 @enderror">
+                                    @error('calle')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div>
+                                    <label for="numero" class="block text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-hashtag mr-1"></i>
+                                        Número *
+                                    </label>
+                                    <input type="text" 
+                                           id="numero" 
+                                           name="numero" 
+                                           value="{{ old('numero', $direccion?->numero ?? '') }}"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 @error('numero') border-red-500 @enderror">
+                                    @error('numero')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                                <div>
+                                    <label for="estado" class="block text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-map mr-1"></i>
+                                        Estado *
+                                    </label>
+                                    <select id="estado" 
+                                            name="estado"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 @error('estado') border-red-500 @enderror">
+                                        <option value="">Selecciona un estado</option>
+                                    </select>
+                                    @error('estado')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div>
+                                    <label for="municipio" class="block text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-city mr-1"></i>
+                                        Municipio *
+                                    </label>
+                                    <select id="municipio" 
+                                            name="municipio"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 @error('municipio') border-red-500 @enderror"
+                                            disabled>
+                                        <option value="">Primero selecciona estado</option>
+                                    </select>
+                                    @error('municipio')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div>
+                                    <label for="codigo_postal_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-mail-bulk mr-1"></i>
+                                        Colonia / CP *
+                                    </label>
+                                    <select id="codigo_postal_id" 
+                                            name="codigo_postal_id"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 @error('codigo_postal_id') border-red-500 @enderror"
+                                            disabled>
+                                        <option value="">Primero selecciona municipio</option>
+                                    </select>
+                                    @error('codigo_postal_id')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                <div>
+                                    <label for="tipo" class="block text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-home mr-1"></i>
+                                        Tipo de Dirección *
+                                    </label>
+                                    <select id="tipo" 
+                                            name="tipo"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 @error('tipo') border-red-500 @enderror">
+                                        <option value="casa" {{ old('tipo', $direccion?->tipo ?? 'casa') == 'casa' ? 'selected' : '' }}>Casa</option>
+                                        <option value="trabajo" {{ old('tipo', $direccion?->tipo ?? '') == 'trabajo' ? 'selected' : '' }}>Trabajo</option>
+                                        <option value="otro" {{ old('tipo', $direccion?->tipo ?? '') == 'otro' ? 'selected' : '' }}>Otro</option>
+                                    </select>
+                                    @error('tipo')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div>
+                                    <label for="referencias" class="block text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        Referencias
+                                    </label>
+                                    <input type="text" 
+                                           id="referencias" 
+                                           name="referencias" 
+                                           value="{{ old('referencias', $direccion?->referencias ?? '') }}"
+                                           placeholder="Ej: Entre calle A y B"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 @error('referencias') border-red-500 @enderror">
+                                    @error('referencias')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Cambio de Contraseña -->
-                        <div class="border-t border-gray-200 pt-6">
+                        <div class="border-t border-gray-200 pt-6 mt-6">
                             <h4 class="text-md font-semibold text-gray-900 mb-4">
                                 <i class="fas fa-lock text-yellow-500 mr-2"></i>
                                 Cambiar Contraseña (Opcional)
@@ -257,4 +345,154 @@
     }
 </style>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const estadoSelect = document.getElementById('estado');
+    const municipioSelect = document.getElementById('municipio');
+    const coloniaSelect = document.getElementById('codigo_postal_id');
+    
+    // Datos precargados de la dirección
+    const direccionActual = {
+        estado: @json(isset($direccion) ? $direccion->estado : ''),
+        municipio: @json(isset($direccion) ? $direccion->municipio : ''),
+        codigo_postal_id: @json(isset($direccion) ? $direccion->codigo_postal_id : null)
+    };
+    
+    // Cargar estados al inicio
+    cargarEstados();
+    
+    // Event listeners
+    estadoSelect.addEventListener('change', function() {
+        const estado = this.value;
+        if (estado) {
+            cargarMunicipios(estado);
+        } else {
+            resetSelect(municipioSelect, 'Primero selecciona estado');
+            resetSelect(coloniaSelect, 'Primero selecciona municipio');
+        }
+    });
+    
+    municipioSelect.addEventListener('change', function() {
+        const municipio = this.value;
+        const estado = estadoSelect.value;
+        if (municipio && estado) {
+            cargarColonias(estado, municipio);
+        } else {
+            resetSelect(coloniaSelect, 'Primero selecciona municipio');
+        }
+    });
+    
+    /**
+     * Cargar estados desde la API
+     */
+    function cargarEstados() {
+        fetch('/api/codigos-postales/estados')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    estadoSelect.innerHTML = '<option value="">Selecciona un estado</option>';
+                    data.data.forEach(estado => {
+                        const option = document.createElement('option');
+                        option.value = estado;
+                        option.textContent = estado;
+                        if (estado === direccionActual.estado) {
+                            option.selected = true;
+                        }
+                        estadoSelect.appendChild(option);
+                    });
+                    
+                    // Si hay estado precargado, cargar municipios
+                    if (direccionActual.estado) {
+                        cargarMunicipios(direccionActual.estado);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error al cargar estados:', error);
+                showError('Error al cargar estados');
+            });
+    }
+    
+    /**
+     * Cargar municipios según el estado seleccionado
+     */
+    function cargarMunicipios(estado) {
+        fetch(`/api/codigos-postales/municipios?estado=${encodeURIComponent(estado)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    municipioSelect.innerHTML = '<option value="">Selecciona un municipio</option>';
+                    municipioSelect.disabled = false;
+                    
+                    data.data.forEach(municipio => {
+                        const option = document.createElement('option');
+                        option.value = municipio;
+                        option.textContent = municipio;
+                        if (municipio === direccionActual.municipio) {
+                            option.selected = true;
+                        }
+                        municipioSelect.appendChild(option);
+                    });
+                    
+                    // Si hay municipio precargado, cargar colonias
+                    if (direccionActual.municipio) {
+                        cargarColonias(estado, direccionActual.municipio);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error al cargar municipios:', error);
+                showError('Error al cargar municipios');
+            });
+    }
+    
+    /**
+     * Cargar colonias según estado y municipio
+     */
+    function cargarColonias(estado, municipio) {
+        fetch(`/api/codigos-postales/colonias?estado=${encodeURIComponent(estado)}&municipio=${encodeURIComponent(municipio)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    coloniaSelect.innerHTML = '<option value="">Selecciona colonia / código postal</option>';
+                    coloniaSelect.disabled = false;
+                    
+                    data.data.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = `${item.colonia} (CP: ${item.codigo_postal})`;
+                        if (item.id == direccionActual.codigo_postal_id) {
+                            option.selected = true;
+                        }
+                        coloniaSelect.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error al cargar colonias:', error);
+                showError('Error al cargar colonias');
+            });
+    }
+    
+    /**
+     * Resetear un select
+     */
+    function resetSelect(select, placeholder) {
+        select.innerHTML = `<option value="">${placeholder}</option>`;
+        select.disabled = true;
+    }
+    
+    /**
+     * Mostrar error
+     */
+    function showError(message) {
+        console.error(message);
+        // Aquí podrías agregar un toast notification si lo deseas
+    }
+});
+</script>
+@endpush
+
 @endsection

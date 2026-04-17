@@ -1,108 +1,114 @@
-<?php
+﻿<?php
 // Iniciar sesión para mantener datos de cliente
 session_start();
 
 // Configuración fija
-define('BASE_URL', 'https://opercompruebausa.oppen.io/genericapi/fidelizacion');
-define('BEARER_TOKEN', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiT08iLCJwZXJtaXNzaW9ucyI6W10sImlhdCI6MTc2MjQ2NTk5NCwiZXhwIjo0MjgyNDY1OTk0fQ.NkN5FSDfrwzbgNrt_xYEmijMPnlM3ABaHNmeA6mqZuc');
+define('BASE_URL', 'https://opercompruebausa.oppen.io/genericapi/fidelizaciontest');
+define('BEARER_TOKEN', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiU0lTSURQVTAxIiwicGVybWlzc2lvbnMiOltdLCJpYXQiOjE3NzU2Njk5NzUsImV4cCI6MTAxNzc1NjY5OTc0fQ.acyeX-5XD-WuKAH1OsNROLqB5rx7Ol0U4iSjp-pnqXI');
 
 /**
- * Extrae los datos del formulario para create/update
+ * Construye el body JSON para create/update
  */
-function build_customer_body() {
-    return [
-        'PersonCustomer' => true,
-        'PersonName' => $_POST['PersonName'] ?? '',
-        'PersonLastName' => $_POST['PersonLastName'] ?? '',
-        'PersonLastName2' => $_POST['PersonLastName2'] ?? '',
-        'TaxRegNr' => $_POST['TaxRegNr'] ?? '',
-        'EmailClubLazarza' => $_POST['EmailClubLazarza'] ?? '',
-        'Phone' => $_POST['Phone'] ?? '',
-        'Province' => $_POST['Province'] ?? '',
-        'CityName' => $_POST['CityName'] ?? '',
-        'DistrictName' => $_POST['DistrictName'] ?? ''
+function build_customer_body(): array {
+    $sex  = trim($_POST['PersonSex'] ?? '');
+    $body = [
+        'PersonCustomer'   => true,
+        'PersonName'       => trim($_POST['PersonName']       ?? ''),
+        'PersonLastName'   => trim($_POST['PersonLastName']   ?? ''),
+        'PersonLastName2'  => trim($_POST['PersonLastName2']  ?? ''),
+        'PersonBirthDate'  => trim($_POST['PersonBirthDate']  ?? ''),
+        'PersonSex'        => $sex !== '' ? (int)$sex : null,
+        'TaxRegNr'         => trim($_POST['TaxRegNr']         ?? ''),
+        'EmailClubLazarza' => trim($_POST['EmailClubLazarza'] ?? ''),
+        'Phone'            => trim($_POST['Phone']            ?? ''),
+        'Province'         => trim($_POST['Province']         ?? ''),
+        'CityName'         => trim($_POST['CityName']         ?? ''),
+        'DistrictName'     => trim($_POST['DistrictName']     ?? ''),
+        'TaxRegSAT'                => '612',
+        'Address'                  => 'Calle',
+        'ClubLazarzaPromoEmails'   => isset($_POST['ClubLazarzaPromoEmails']),
+        'ClubLazarzaPromoWhatsApp' => isset($_POST['ClubLazarzaPromoWhatsApp']),
     ];
+    return $body;
 }
 
 /**
- * Obtiene los datos del cliente para pre-llenar el formulario
+ * Obtiene datos de un cliente por código
  */
-function get_customer_data($code) {
-    $endpoint = 'Customer/' . urlencode($code);
-    $result = api_request('GET', $endpoint);
-    
-    if (isset($result['json']) && is_array($result['json'])) {
-        // La API devuelve la estructura: json -> data -> [array de clientes]
-        $data = $result['json']['data'] ?? $result['json'];
-        
-        if (is_array($data) && !empty($data)) {
-            // Si es un array de clientes
-            if (isset($data[0])) {
-                $customer = $data[0];
-                // Filtrar clientes cerrados
-                if (isset($customer['Code']) && !empty($customer['Code']) && (!isset($customer['Closed']) || $customer['Closed'] != 1)) {
-                    return $customer;
-                }
-            } elseif (isset($data['Code']) && !empty($data['Code'])) {
-                // Si es un solo cliente, verificar que no esté cerrado
-                if (!isset($data['Closed']) || $data['Closed'] != 1) {
-                    return $data;
-                }
-            }
-        }
-    }
-    return null;
+function get_customer_data(string $code): ?array {
+    $result = api_request('GET', 'Customer/' . urlencode($code));
+    if (!isset($result['json']) || !is_array($result['json'])) return null;
+    $data = $result['json']['data'] ?? $result['json'];
+    if (!is_array($data) || empty($data)) return null;
+    $customer = isset($data[0]) ? $data[0] : $data;
+    if (empty($customer['Code'])) return null;
+    if (isset($customer['Closed']) && $customer['Closed'] == 1) return null;
+    return $customer;
 }
 
-function api_request(string $method, string $endpoint, array $query = [], $body = null) {
-    $base = BASE_URL;
-    $token = BEARER_TOKEN;
-
-    $url = rtrim($base, '/') . '/' . ltrim($endpoint, '/');
-    if (!empty($query)) {
-        $url .= '?' . http_build_query($query);
+/**
+ * Busca clientes por un parámetro de la API
+ */
+function search_customers(string $param, string $value): array {
+    $result = api_request('GET', 'Customer', [$param => $value]);
+    if (!isset($result['json']) || !is_array($result['json'])) {
+        return ['error' => "Sin resultados: {$param}={$value}", 'status' => 404];
     }
+    $data = $result['json']['data'] ?? $result['json'];
+    if (!is_array($data)) {
+        return ['error' => "Sin resultados: {$param}={$value}", 'status' => 404];
+    }
+    if (isset($data['Code'])) $data = [$data];
+    $data = array_values(array_filter($data, fn($c) =>
+        !empty($c['Code']) && (!isset($c['Closed']) || $c['Closed'] != 1)
+    ));
+    if (empty($data)) {
+        return ['error' => "No hay cliente activo con {$param}={$value}", 'status' => 404];
+    }
+    $result['json'] = $data;
+    return $result;
+}
+
+function api_request(string $method, string $endpoint, array $query = [], $body = null): array {
+    $url = rtrim(BASE_URL, '/') . '/' . ltrim($endpoint, '/');
+    if (!empty($query)) $url .= '?' . http_build_query($query);
 
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt_array($ch, [
+        CURLOPT_URL            => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 30,
+    ]);
 
-    $headers = [];
-    if ($token) {
-        $headers[] = 'Authorization: Bearer ' . $token;
-    }
+    $headers  = ['Authorization: Bearer ' . BEARER_TOKEN];
+    $sentJson = null;
 
     if (in_array($method, ['POST', 'PUT', 'PATCH'])) {
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
         if ($body !== null) {
-            $json = json_encode($body, JSON_UNESCAPED_UNICODE);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
+            $sentJson = json_encode($body, JSON_UNESCAPED_UNICODE);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $sentJson);
             $headers[] = 'Content-Type: application/json';
-            $headers[] = 'Content-Length: ' . strlen($json);
+            $headers[] = 'Content-Length: ' . strlen($sentJson);
         }
     } else {
         curl_setopt($ch, CURLOPT_HTTPGET, true);
     }
 
-    if (!empty($headers)) {
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    }
-
-    $resp = curl_exec($ch);
-    $err = curl_error($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    $resp   = curl_exec($ch);
+    $err    = curl_error($ch);
+    $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    if ($resp === false) {
-        return ['error' => 'cURL error: ' . $err];
-    }
-
-    $decoded = json_decode($resp, true);
+    if ($resp === false) return ['error' => 'cURL: ' . $err];
     return [
-        'status' => $httpCode,
-        'raw' => $resp,
-        'json' => $decoded,
+        'status'     => $status,
+        'raw'        => $resp,
+        'json'       => json_decode($resp, true),
+        '_method'    => $method,
+        '_url'       => $url,
+        '_sent_body' => $sentJson,
     ];
 }
 
@@ -114,183 +120,82 @@ $current_customer_code = $_SESSION['current_customer_code'] ?? null;
 // Handle actions from forms
 if (isset($_POST['action'])) {
     switch ($_POST['action']) {
-        case 'search_rfc':
-            $tax = trim($_POST['TaxRegNr'] ?? '');
-            if (empty($tax)) {
-                $result = ['error' => 'RFC es requerido para buscar'];
-            } else {
-                $api_result = api_request('GET', 'Customer', ['TaxRegNr' => $tax]);
-                // La API devuelve: json -> data -> [array de clientes]
-                if (isset($api_result['json']) && is_array($api_result['json'])) {
-                    $data = $api_result['json']['data'] ?? $api_result['json'];
-                    
-                    // Filtrar clientes cerrados (Closed == 1)
-                    if (is_array($data)) {
-                        if (isset($data[0])) {
-                            // Es un array de clientes, filtrar los cerrados
-                            $data = array_values(array_filter($data, function($customer) {
-                                return !isset($customer['Closed']) || $customer['Closed'] != 1;
-                            }));
-                        } elseif (isset($data['Closed']) && $data['Closed'] == 1) {
-                            // Es un solo cliente y está cerrado
-                            $data = [];
-                        }
-                    }
-                    
-                    $has_valid_customer = false;
-                    if (is_array($data) && !empty($data)) {
-                        if (isset($data[0])) {
-                            $has_valid_customer = isset($data[0]['Code']) && !empty($data[0]['Code']);
-                        } elseif (isset($data['Code'])) {
-                            $has_valid_customer = !empty($data['Code']);
-                        }
-                    }
-                    
-                    if ($has_valid_customer) {
-                        // Normalizar la estructura para el frontend
-                        $api_result['json'] = $data;
-                        $result = $api_result;
-                    } else {
-                        $result = ['error' => 'No se encontró ningún cliente activo con el RFC: ' . $tax, 'status' => 404];
-                    }
-                } else {
-                    $result = ['error' => 'No se encontró ningún cliente con el RFC: ' . $tax, 'status' => 404];
-                }
-            }
+
+        case 'search':
+            $type  = $_POST['search_type'] ?? 'TaxRegNr';
+            $value = trim($_POST['search_value'] ?? '');
+            $result = $value === ''
+                ? ['error' => 'Ingresa un valor para buscar']
+                : search_customers($type, $value);
             $_POST = [];
             break;
-        case 'search_email':
-            $email = trim($_POST['EmailClubLazarza'] ?? '');
-            if (empty($email)) {
-                $result = ['error' => 'Email es requerido para buscar'];
-            } else {
-                $api_result = api_request('GET', 'Customer', ['EmailClubLazarza' => $email]);
-                // La API devuelve: json -> data -> [array de clientes]
-                if (isset($api_result['json']) && is_array($api_result['json'])) {
-                    $data = $api_result['json']['data'] ?? $api_result['json'];
-                    
-                    // Filtrar clientes cerrados (Closed == 1)
-                    if (is_array($data)) {
-                        if (isset($data[0])) {
-                            // Es un array de clientes, filtrar los cerrados
-                            $data = array_values(array_filter($data, function($customer) {
-                                return !isset($customer['Closed']) || $customer['Closed'] != 1;
-                            }));
-                        } elseif (isset($data['Closed']) && $data['Closed'] == 1) {
-                            // Es un solo cliente y está cerrado
-                            $data = [];
-                        }
-                    }
-                    
-                    $has_valid_customer = false;
-                    if (is_array($data) && !empty($data)) {
-                        if (isset($data[0])) {
-                            $has_valid_customer = isset($data[0]['Code']) && !empty($data[0]['Code']);
-                        } elseif (isset($data['Code'])) {
-                            $has_valid_customer = !empty($data['Code']);
-                        }
-                    }
-                    
-                    if ($has_valid_customer) {
-                        // Normalizar la estructura para el frontend
-                        $api_result['json'] = $data;
-                        $result = $api_result;
-                    } else {
-                        $result = ['error' => 'No se encontró ningún cliente activo con el email: ' . $email, 'status' => 404];
-                    }
-                } else {
-                    $result = ['error' => 'No se encontró ningún cliente con el email: ' . $email, 'status' => 404];
-                }
-            }
-            $_POST = [];
-            break;
-        case 'search_phone':
-            $phone = trim($_POST['Phone'] ?? '');
-            if (empty($phone)) {
-                $result = ['error' => 'Teléfono es requerido para buscar'];
-            } else {
-                $api_result = api_request('GET', 'Customer', ['Phone' => $phone]);
-                // La API devuelve: json -> data -> [array de clientes]
-                if (isset($api_result['json']) && is_array($api_result['json'])) {
-                    $data = $api_result['json']['data'] ?? $api_result['json'];
-                    
-                    // Filtrar clientes cerrados (Closed == 1)
-                    if (is_array($data)) {
-                        if (isset($data[0])) {
-                            // Es un array de clientes, filtrar los cerrados
-                            $data = array_values(array_filter($data, function($customer) {
-                                return !isset($customer['Closed']) || $customer['Closed'] != 1;
-                            }));
-                        } elseif (isset($data['Closed']) && $data['Closed'] == 1) {
-                            // Es un solo cliente y está cerrado
-                            $data = [];
-                        }
-                    }
-                    
-                    $has_valid_customer = false;
-                    if (is_array($data) && !empty($data)) {
-                        if (isset($data[0])) {
-                            $has_valid_customer = isset($data[0]['Code']) && !empty($data[0]['Code']);
-                        } elseif (isset($data['Code'])) {
-                            $has_valid_customer = !empty($data['Code']);
-                        }
-                    }
-                    
-                    if ($has_valid_customer) {
-                        // Normalizar la estructura para el frontend
-                        $api_result['json'] = $data;
-                        $result = $api_result;
-                    } else {
-                        $result = ['error' => 'No se encontró ningún cliente activo con el teléfono: ' . $phone, 'status' => 404];
-                    }
-                } else {
-                    $result = ['error' => 'No se encontró ningún cliente con el teléfono: ' . $phone, 'status' => 404];
-                }
-            }
-            $_POST = [];
-            break;
+
         case 'search_customer':
             $code = trim($_POST['CustomerCode'] ?? '');
             if ($code === '') {
-                $result = ['error' => 'CustomerCode es requerido'];
+                $result = ['error' => 'Ingresa el código del cliente'];
             } else {
-                $customer_data = get_customer_data($code);
-                if ($customer_data) {
+                $cd = get_customer_data($code);
+                if ($cd) {
                     $_SESSION['current_customer_code'] = $code;
                     $current_customer_code = $code;
-                    $search_mode = true;
-                    $result = ['success' => 'Cliente encontrado, puedes actualizar sus datos'];
+                    $customer_data = $cd;
+                    $search_mode   = true;
+                    $result = ['success' => "Cliente {$code} cargado correctamente"];
                 } else {
-                    $result = ['error' => 'Cliente no encontrado'];
+                    $result = ['error' => "Cliente {$code} no encontrado o inactivo"];
                 }
             }
             break;
+
         case 'create':
-            $body = build_customer_body();
+            $body   = build_customer_body();
             $result = api_request('POST', 'Customer', [], $body);
-            $_POST = [];
+            $_POST  = [];
             break;
+
         case 'update':
             $code = trim($_POST['CustomerCode'] ?? $current_customer_code ?? '');
             if ($code === '') {
-                $result = ['error' => 'CustomerCode es requerido para actualizar'];
+                $result = ['error' => 'CustomerCode es requerido'];
             } else {
-                $body = build_customer_body();
-                $endpoint = 'Customer/' . urlencode($code);
-                $result = api_request('PUT', $endpoint, [], $body);
-                if ($result['status'] >= 200 && $result['status'] < 300) {
-                    $_POST = [];
-                    $customer_data = null;
-                    $search_mode = false;
+                $body   = build_customer_body();
+                $result = api_request('PUT', 'Customer/' . urlencode($code), [], $body);
+                if (isset($result['status']) && $result['status'] >= 200 && $result['status'] < 300) {
+                    $result['success']         = "Cliente {$code} actualizado correctamente";
+                    $result['_update_success'] = true;
                     unset($_SESSION['current_customer_code']);
                     $current_customer_code = null;
+                    $customer_data         = null;
+                    $search_mode           = false;
+                    $_POST = [];
+                } else {
+                    $search_mode = true;
+                    $sex = trim($_POST['PersonSex'] ?? '');
+                    $customer_data = [
+                        'Code'             => $code,
+                        'PersonName'       => $_POST['PersonName']       ?? '',
+                        'PersonLastName'   => $_POST['PersonLastName']   ?? '',
+                        'PersonLastName2'  => $_POST['PersonLastName2']  ?? '',
+                        'PersonBirthDate'  => $_POST['PersonBirthDate']  ?? '',
+                        'PersonSex'        => $sex !== '' ? (int)$sex : null,
+                        'TaxRegNr'         => $_POST['TaxRegNr']         ?? '',
+                        'EmailClubLazarza' => $_POST['EmailClubLazarza'] ?? '',
+                        'Phone'            => $_POST['Phone']            ?? '',
+                        'Province'         => $_POST['Province']         ?? '',
+                        'CityName'         => $_POST['CityName']         ?? '',
+                        'DistrictName'             => $_POST['DistrictName']             ?? '',
+                        'ClubLazarzaPromoEmails'   => isset($_POST['ClubLazarzaPromoEmails']),
+                        'ClubLazarzaPromoWhatsApp' => isset($_POST['ClubLazarzaPromoWhatsApp']),
+                    ];
                 }
             }
             break;
+
         case 'clear_customer':
             unset($_SESSION['current_customer_code']);
-            $customer_data = null;
-            $search_mode = false;
+            $customer_data         = null;
+            $search_mode           = false;
             $current_customer_code = null;
             $_POST = [];
             break;
@@ -302,898 +207,540 @@ if (isset($_POST['action'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formulario de Pruebas - Lazarza</title>
+    <title>API Test – Customer · Lazarza</title>
     <link rel="icon" type="image/png" href="/logozarza.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    
     <style>
-        .zarza-gradient { background: linear-gradient(135deg, #b51a8a 0%, #71398d 100%); }
-        .form-input:focus { border-color: #b51a8a; box-shadow: 0 0 0 3px rgba(181, 26, 138, 0.1); }
-        .zarza-text { color: #b51a8a; }
-        .zarza-bg { background-color: #b51a8a; }
-        .zarza-bg-hover:hover { background-color: #71398d; }
-        .zarza-badge { background-color: #f3e8ff; color: #b51a8a; }
-        .response-box { background: #f6f6f6; border-left: 4px solid #b51a8a; max-height: 400px; overflow-y: auto; }
-        .tab-button { @apply px-4 py-2 rounded-lg transition-all; }
-        .tab-button.active { @apply zarza-bg text-white; }
-        .tab-button:not(.active) { @apply bg-gray-200 text-gray-700 hover:bg-gray-300; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+        .z-text { color:#b51a8a; }
+        .z-bg   { background-color:#b51a8a; }
+        .z-ring:focus { outline:none; box-shadow:0 0 0 3px rgba(181,26,138,.2); border-color:#b51a8a; }
+        .tab-btn { padding:.45rem 1rem; border-radius:.5rem; font-size:.85rem; font-weight:500; cursor:pointer; transition:all .15s; }
+        .tab-btn.on  { background:#b51a8a; color:#fff; }
+        .tab-btn.off { background:#f3f4f6; color:#4b5563; }
+        .tab-btn.off:hover { background:#e5e7eb; }
+        .tab-pane { display:none; }
+        .tab-pane.on { display:block; }
+        .fl { display:block; font-size:.68rem; font-weight:700; color:#9ca3af; text-transform:uppercase; letter-spacing:.05em; margin-bottom:.25rem; }
+        .fi { width:100%; padding:.45rem .75rem; border:1px solid #d1d5db; border-radius:.5rem; font-size:.875rem; }
+        .fi:focus { outline:none; box-shadow:0 0 0 3px rgba(181,26,138,.2); border-color:#b51a8a; }
+        .cbox { background:#111827; color:#86efac; font-family:monospace; font-size:.7rem; padding:.75rem; border-radius:.5rem; overflow:auto; max-height:320px; white-space:pre-wrap; }
+        .bok  { display:inline-block; padding:.1rem .45rem; border-radius:.3rem; font-size:.72rem; font-weight:700; background:#dcfce7; color:#15803d; border:1px solid #86efac; }
+        .berr { display:inline-block; padding:.1rem .45rem; border-radius:.3rem; font-size:.72rem; font-weight:700; background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; }
+        .binfo{ display:inline-block; padding:.1rem .45rem; border-radius:.3rem; font-size:.72rem; font-weight:700; background:#dbeafe; color:#1d4ed8; border:1px solid #93c5fd; }
+        @keyframes fi { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+        .fi-anim { animation:fi .2s ease; }
+        .radio-opt { display:flex; align-items:center; gap:.4rem; cursor:pointer; font-size:.875rem; font-weight:500; color:#374151; }
+        .radio-opt input { accent-color:#b51a8a; width:1rem; height:1rem; }
     </style>
 </head>
-<body class="zarza-gradient min-h-screen py-12 px-4">
-    <div class="max-w-6xl mx-auto">
-        <!-- Header -->
-        <div class="bg-white rounded-lg shadow-xl p-8 mb-6">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <img src="/logoZarza.webp" alt="La Zarza Contigo" class="h-16 w-auto">
-                    <div>
-                        <h1 class="text-3xl font-bold zarza-text">Formulario de Pruebas</h1>
-                        <p class="text-gray-600">Sistema de Gestión de Clientes - Lazarza</p>
-                    </div>
-                </div>
-                <a href="/" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-all">
-                    <i class="fas fa-arrow-left"></i>
-                    Volver
-                </a>
-            </div>
-        </div>
+<body class="bg-gray-50 min-h-screen">
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Main Form Area -->
-            <div class="lg:col-span-2">
-                <!-- Tab Navigation -->
-                <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-                    <div class="flex gap-2 flex-wrap mb-6">
-                        <button class="tab-button active" onclick="showTab('search')">
-                            <i class="fas fa-search mr-2"></i>Buscar
-                        </button>
-                        <button class="tab-button" onclick="showTab('create')">
-                            <i class="fas fa-user-plus mr-2"></i>Crear
-                        </button>
-                        <button class="tab-button" onclick="showTab('update')">
-                            <i class="fas fa-edit mr-2"></i>Actualizar
-                        </button>
-                    </div>
-
-                    <!-- Search Tab -->
-                    <div id="search" class="tab-content active space-y-6">
-                        <h3 class="text-xl font-semibold zarza-text mb-4">
-                            <i class="fas fa-search mr-2"></i>Buscar Cliente
-                        </h3>
-
-                        <!-- Búsqueda por RFC -->
-                        <form method="post" class="space-y-4">
-                            <div class="grid grid-cols-1 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                                        <i class="fas fa-id-card mr-2"></i>RFC
-                                    </label>
-                                    <input type="text" name="TaxRegNr" class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" placeholder="ABCD123456XYZ" maxlength="13">
-                                    <input type="hidden" name="action" value="search_rfc">
-                                    <button type="submit" class="mt-2 w-full zarza-bg text-white py-2 rounded-lg hover:opacity-90 transition-all">
-                                        <i class="fas fa-search mr-2"></i>Buscar por RFC
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-
-                        <!-- Búsqueda por Email -->
-                        <form method="post" class="space-y-4 border-t pt-4">
-                            <div class="grid grid-cols-1 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                                        <i class="fas fa-envelope mr-2"></i>Email
-                                    </label>
-                                    <input type="email" name="EmailClubLazarza" class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" placeholder="cliente@email.com">
-                                    <input type="hidden" name="action" value="search_email">
-                                    <button type="submit" class="mt-2 w-full zarza-bg text-white py-2 rounded-lg hover:opacity-90 transition-all">
-                                        <i class="fas fa-search mr-2"></i>Buscar por Email
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-
-                        <!-- Búsqueda por Teléfono -->
-                        <form method="post" class="space-y-4 border-t pt-4">
-                            <div class="grid grid-cols-1 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                                        <i class="fas fa-phone mr-2"></i>Teléfono
-                                    </label>
-                                    <input type="tel" name="Phone" class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" placeholder="1234567890">
-                                    <input type="hidden" name="action" value="search_phone">
-                                    <button type="submit" class="mt-2 w-full zarza-bg text-white py-2 rounded-lg hover:opacity-90 transition-all">
-                                        <i class="fas fa-search mr-2"></i>Buscar por Teléfono
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Create Tab -->
-                    <div id="create" class="tab-content space-y-6">
-                        <h3 class="text-xl font-semibold zarza-text mb-4">
-                            <i class="fas fa-user-plus mr-2"></i>Crear Nuevo Cliente
-                        </h3>
-
-                        <form method="post" id="createForm" class="space-y-4" onsubmit="return validateForm('create')">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <!-- Nombres -->
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                                        Nombres <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="text" name="PersonName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" placeholder="Juan Carlos">
-                                </div>
-
-                                <!-- Apellido Paterno -->
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                                        Apellido Paterno <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="text" name="PersonLastName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" placeholder="Pérez">
-                                </div>
-
-                                <!-- Apellido Materno -->
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                                        Apellido Materno <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="text" name="PersonLastName2" required class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" placeholder="García">
-                                </div>
-
-                                <!-- Fecha de Nacimiento -->
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                                        Fecha de Nacimiento <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="date" name="PersonBirthDate" required class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input">
-                                </div>
-
-                                <!-- RFC (Auto-calculado) -->
-                                <div class="md:col-span-2">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                                        RFC 
-                                        <span class="text-xs text-purple-600 font-normal">
-                                            <i class="fas fa-magic"></i> (Auto-calculado)
-                                        </span>
-                                    </label>
-                                    <input type="text" name="TaxRegNr" id="rfc-create" class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input bg-gray-50" placeholder="Se calculará automáticamente" maxlength="13" readonly>
-                                    <p class="text-xs text-gray-500 mt-1">
-                                        <i class="fas fa-info-circle"></i> El RFC se genera automáticamente al completar nombre, apellidos y fecha de nacimiento
-                                    </p>
-                                </div>
-
-                                <!-- Género -->
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                                        Género <span class="text-red-500">*</span>
-                                    </label>
-                                    <select name="PersonGender" required class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input">
-                                        <option value="">Seleccione...</option>
-                                        <option value="Femenino">Femenino</option>
-                                        <option value="Masculino">Masculino</option>
-                                        <option value="Prefiero no especificar">Prefiero no especificar</option>
-                                    </select>
-                                </div>
-
-                                <!-- Teléfono -->
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                                        Teléfono <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="tel" name="Phone" required class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" placeholder="+52 1234567890">
-                                </div>
-
-                                <!-- Correo Electrónico -->
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                                        Correo Electrónico <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="email" name="EmailClubLazarza" id="email-create" required class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" placeholder="cliente@email.com">
-                                </div>
-
-                                <!-- Confirmar Correo Electrónico -->
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                                        Confirmar Correo Electrónico <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="email" name="EmailConfirm" id="email-confirm-create" required class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" placeholder="cliente@email.com">
-                                </div>
-
-                                <!-- Estado -->
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                                        Estado <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="text" name="Province" required class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" placeholder="Jalisco">
-                                </div>
-
-                                <!-- Municipio -->
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                                        Municipio <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="text" name="CityName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" placeholder="Guadalajara">
-                                </div>
-
-                                <!-- Colonia -->
-                                <div class="md:col-span-2">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                                        Colonia <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="text" name="DistrictName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" placeholder="Centro">
-                                </div>
-
-                                <!-- Contraseña -->
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                                        Contraseña <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="password" name="Password" id="password-create" required minlength="8" class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" placeholder="Mínimo 8 caracteres">
-                                </div>
-
-                                <!-- Confirmación de Contraseña -->
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                                        Confirmar Contraseña <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="password" name="PasswordConfirm" id="password-confirm-create" required minlength="8" class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" placeholder="Mínimo 8 caracteres">
-                                </div>
-                            </div>
-
-                            <input type="hidden" name="action" value="create">
-                            <button type="submit" class="w-full zarza-bg text-white py-3 rounded-lg hover:opacity-90 transition-all font-semibold">
-                                <i class="fas fa-save mr-2"></i>Crear Cliente
-                            </button>
-                        </form>
-                    </div>
-
-                    <!-- Update Tab -->
-                    <div id="update" class="tab-content space-y-6">
-                        <h3 class="text-xl font-semibold zarza-text mb-4">
-                            <i class="fas fa-edit mr-2"></i>Actualizar Cliente
-                        </h3>
-
-                        <form method="post" class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    <i class="fas fa-barcode mr-2"></i>Código de Cliente
-                                </label>
-                                <input type="text" name="CustomerCode" class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" placeholder="VL008103" value="<?php echo htmlspecialchars($current_customer_code ?? ''); ?>">
-                                <input type="hidden" name="action" value="search_customer">
-                                <button type="submit" class="mt-2 w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-all">
-                                    <i class="fas fa-search mr-2"></i>Buscar Cliente
-                                </button>
-                            </div>
-
-                            <?php if ($current_customer_code): ?>
-                                <div class="bg-green-50 border border-green-200 rounded-lg p-3">
-                                    <p class="text-green-700">
-                                        <i class="fas fa-check-circle mr-2"></i>
-                                        <strong>Cliente cargado:</strong> <?php echo htmlspecialchars($current_customer_code); ?>
-                                    </p>
-                                </div>
-                            <?php endif; ?>
-                        </form>
-
-                        <?php if ($search_mode && $customer_data): ?>
-                            <form method="post" id="updateForm" class="space-y-4 border-t pt-4" onsubmit="return validateForm('update')">
-                                <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
-                                    <p class="text-amber-700">
-                                        <i class="fas fa-edit mr-2"></i>
-                                        <strong>Editando:</strong> <?php echo htmlspecialchars($customer_data['Code'] ?? $current_customer_code); ?>
-                                    </p>
-                                </div>
-
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <!-- Nombres -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Nombres <span class="text-red-500">*</span>
-                                        </label>
-                                        <input type="text" name="PersonName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" value="<?php echo htmlspecialchars($customer_data['PersonName'] ?? ''); ?>">
-                                    </div>
-
-                                    <!-- Apellido Paterno -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Apellido Paterno <span class="text-red-500">*</span>
-                                        </label>
-                                        <input type="text" name="PersonLastName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" value="<?php echo htmlspecialchars($customer_data['PersonLastName'] ?? ''); ?>">
-                                    </div>
-
-                                    <!-- Apellido Materno -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Apellido Materno <span class="text-red-500">*</span>
-                                        </label>
-                                        <input type="text" name="PersonLastName2" required class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" value="<?php echo htmlspecialchars($customer_data['PersonLastName2'] ?? ''); ?>">
-                                    </div>
-
-                                    <!-- Fecha de Nacimiento -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Fecha de Nacimiento <span class="text-red-500">*</span>
-                                        </label>
-                                        <input type="date" name="PersonBirthDate" required class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" value="<?php echo htmlspecialchars($customer_data['PersonBirthDate'] ?? ''); ?>">
-                                    </div>
-
-                                    <!-- RFC (Auto-calculado) -->
-                                    <div class="md:col-span-2">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            RFC
-                                            <span class="text-xs text-purple-600 font-normal">
-                                                <i class="fas fa-magic"></i> (Auto-calculado)
-                                            </span>
-                                        </label>
-                                        <input type="text" name="TaxRegNr" id="rfc-update" class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input bg-gray-50" value="<?php echo htmlspecialchars($customer_data['TaxRegNr'] ?? ''); ?>" maxlength="13" readonly>
-                                        <p class="text-xs text-gray-500 mt-1">
-                                            <i class="fas fa-info-circle"></i> El RFC se actualiza al modificar nombre, apellidos o fecha de nacimiento
-                                        </p>
-                                    </div>
-
-                                    <!-- Género -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Género <span class="text-red-500">*</span>
-                                        </label>
-                                        <select name="PersonGender" required class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input">
-                                            <option value="">Seleccione...</option>
-                                            <option value="Femenino" <?php echo ($customer_data['PersonGender'] ?? '') === 'Femenino' ? 'selected' : ''; ?>>Femenino</option>
-                                            <option value="Masculino" <?php echo ($customer_data['PersonGender'] ?? '') === 'Masculino' ? 'selected' : ''; ?>>Masculino</option>
-                                            <option value="Prefiero no especificar" <?php echo ($customer_data['PersonGender'] ?? '') === 'Prefiero no especificar' ? 'selected' : ''; ?>>Prefiero no especificar</option>
-                                        </select>
-                                    </div>
-
-                                    <!-- Teléfono -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Teléfono <span class="text-red-500">*</span>
-                                        </label>
-                                        <input type="tel" name="Phone" required class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" value="<?php echo htmlspecialchars($customer_data['Phone'] ?? ''); ?>">
-                                    </div>
-
-                                    <!-- Correo Electrónico -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Correo Electrónico <span class="text-red-500">*</span>
-                                        </label>
-                                        <input type="email" name="EmailClubLazarza" id="email-update" required class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" value="<?php echo htmlspecialchars($customer_data['EmailClubLazarza'] ?? ''); ?>">
-                                    </div>
-
-                                    <!-- Confirmar Correo Electrónico -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Confirmar Correo Electrónico <span class="text-red-500">*</span>
-                                        </label>
-                                        <input type="email" name="EmailConfirm" id="email-confirm-update" required class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" value="<?php echo htmlspecialchars($customer_data['EmailClubLazarza'] ?? ''); ?>">
-                                    </div>
-
-                                    <!-- Estado -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Estado <span class="text-red-500">*</span>
-                                        </label>
-                                        <input type="text" name="Province" required class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" value="<?php echo htmlspecialchars($customer_data['Province'] ?? ''); ?>">
-                                    </div>
-
-                                    <!-- Municipio -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Municipio <span class="text-red-500">*</span>
-                                        </label>
-                                        <input type="text" name="CityName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" value="<?php echo htmlspecialchars($customer_data['CityName'] ?? ''); ?>">
-                                    </div>
-
-                                    <!-- Colonia -->
-                                    <div class="md:col-span-2">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Colonia <span class="text-red-500">*</span>
-                                        </label>
-                                        <input type="text" name="DistrictName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" value="<?php echo htmlspecialchars($customer_data['DistrictName'] ?? ''); ?>">
-                                    </div>
-
-                                    <!-- Contraseña (Opcional en actualización) -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Nueva Contraseña <span class="text-gray-500 text-xs">(dejar en blanco para mantener la actual)</span>
-                                        </label>
-                                        <input type="password" name="Password" id="password-update" minlength="8" class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" placeholder="Mínimo 8 caracteres">
-                                    </div>
-
-                                    <!-- Confirmación de Contraseña -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Confirmar Nueva Contraseña
-                                        </label>
-                                        <input type="password" name="PasswordConfirm" id="password-confirm-update" minlength="8" class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input" placeholder="Mínimo 8 caracteres">
-                                    </div>
-                                </div>
-
-                                <input type="hidden" name="CustomerCode" value="<?php echo htmlspecialchars($current_customer_code); ?>">
-                                <input type="hidden" name="action" value="update">
-                                <div class="flex gap-2">
-                                    <button type="submit" class="flex-1 zarza-bg text-white py-3 rounded-lg hover:opacity-90 transition-all font-semibold">
-                                        <i class="fas fa-save mr-2"></i>Guardar Cambios
-                                    </button>
-                                    <form method="post" class="flex-1">
-                                        <input type="hidden" name="action" value="clear_customer">
-                                        <button type="submit" class="w-full bg-gray-400 text-white py-3 rounded-lg hover:bg-gray-500 transition-all font-semibold">
-                                            <i class="fas fa-times mr-2"></i>Cancelar
-                                        </button>
-                                    </form>
-                                </div>
-                            </form>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Response Panel -->
-            <div class="lg:col-span-1">
-                <div class="bg-white rounded-lg shadow-lg p-6 sticky top-6">
-                    <h3 class="text-lg font-semibold zarza-text mb-4">
-                        <i class="fas fa-server mr-2"></i>Respuesta API
-                    </h3>
-                    
-                    <?php if ($result !== null): ?>
-                        <?php
-                        // Procesar resultado para mostrar de forma amigable
-                        $isSearchResult = isset($result['json']) && is_array($result['json']) && !isset($result['error']);
-                        $isSuccess = isset($result['success']) || (isset($result['status']) && $result['status'] >= 200 && $result['status'] < 300);
-                        $isError = isset($result['error']) || (isset($result['status']) && $result['status'] >= 400);
-                        
-                        // Validar si hay datos reales en la búsqueda
-                        if ($isSearchResult) {
-                            $customers = $result['json'];
-                            $has_valid_data = false;
-                            
-                            if (isset($customers[0])) {
-                                $has_valid_data = isset($customers[0]['Code']) && !empty($customers[0]['Code']);
-                            } elseif (isset($customers['Code'])) {
-                                $has_valid_data = !empty($customers['Code']);
-                            }
-                            
-                            if (!$has_valid_data) {
-                                $isSearchResult = false;
-                                $isError = true;
-                                if (!isset($result['error'])) {
-                                    $result['error'] = 'No se encontraron resultados para la búsqueda';
-                                }
-                            }
-                        }
-                        ?>
-                        
-                        <?php if ($isSearchResult && !empty($result['json'])): ?>
-                            <!-- Resultado de Búsqueda Formateado -->
-                            <div class="space-y-3">
-                                <?php 
-                                $customers = $result['json'];
-                                $count = 0;
-                                
-                                // Si es un array de clientes
-                                if (!isset($customers['Code']) && isset($customers[0])) {
-                                    foreach ($customers as $index => $customer):
-                                        if (!isset($customer['Code']) || empty($customer['Code'])) continue;
-                                        $count++;
-                                ?>
-                                    <div class="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4">
-                                        <div class="flex items-center justify-between mb-2">
-                                            <h4 class="font-bold text-purple-900 flex items-center gap-2">
-                                                <i class="fas fa-user-circle"></i>
-                                                <?php echo htmlspecialchars($customer['PersonName'] ?? 'N/A'); ?>
-                                                <?php echo htmlspecialchars($customer['PersonLastName'] ?? ''); ?>
-                                                <?php echo htmlspecialchars($customer['PersonLastName2'] ?? ''); ?>
-                                            </h4>
-                                            <span class="text-xs bg-purple-600 text-white px-2 py-1 rounded">
-                                                Cliente #<?php echo $count; ?>
-                                            </span>
-                                        </div>
-                                        <div class="space-y-1 text-sm text-gray-700">
-                                            <p><strong><i class="fas fa-barcode mr-1"></i>Código:</strong> <?php echo htmlspecialchars($customer['Code'] ?? 'N/A'); ?></p>
-                                            <p><strong><i class="fas fa-id-card mr-1"></i>RFC:</strong> <?php echo htmlspecialchars($customer['TaxRegNr'] ?? 'N/A'); ?></p>
-                                            <p><strong><i class="fas fa-envelope mr-1"></i>Email:</strong> <?php echo htmlspecialchars($customer['EmailClubLazarza'] ?? 'N/A'); ?></p>
-                                            <p><strong>Teléfono:</strong> <?php echo htmlspecialchars($customer['Phone'] ?? 'N/A'); ?></p>
-                                            <?php if (!empty($customer['PersonGender'])): ?>
-                                                <p><strong>Género:</strong> <?php echo htmlspecialchars($customer['PersonGender']); ?></p>
-                                            <?php endif; ?>
-                                            <?php if (!empty($customer['PersonBirthDate'])): ?>
-                                                <p><strong>Fecha Nac.:</strong> <?php echo htmlspecialchars($customer['PersonBirthDate']); ?></p>
-                                            <?php endif; ?>
-                                        </div>
-                                        <button onclick="copyCode('<?php echo htmlspecialchars($customer['Code'] ?? ''); ?>')" 
-                                                class="mt-2 w-full bg-purple-600 hover:bg-purple-700 text-white text-xs py-1 px-2 rounded transition-all">
-                                            <i class="fas fa-copy mr-1"></i>Copiar Código
-                                        </button>
-                                    </div>
-                                <?php 
-                                    endforeach;
-                                } else {
-                                    // Si es un solo cliente
-                                    $customer = $customers;
-                                ?>
-                                    <div class="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4">
-                                        <div class="flex items-center justify-between mb-2">
-                                            <h4 class="font-bold text-purple-900 flex items-center gap-2">
-                                                <i class="fas fa-user-circle"></i>
-                                                <?php echo htmlspecialchars($customer['PersonName'] ?? 'N/A'); ?>
-                                                <?php echo htmlspecialchars($customer['PersonLastName'] ?? ''); ?>
-                                                <?php echo htmlspecialchars($customer['PersonLastName2'] ?? ''); ?>
-                                            </h4>
-                                        </div>
-                                        <div class="space-y-1 text-sm text-gray-700">
-                                            <p><strong>Código:</strong> <?php echo htmlspecialchars($customer['Code'] ?? 'N/A'); ?></p>
-                                            <p><strong>RFC:</strong> <?php echo htmlspecialchars($customer['TaxRegNr'] ?? 'N/A'); ?></p>
-                                            <p><strong>Email:</strong> <?php echo htmlspecialchars($customer['EmailClubLazarza'] ?? 'N/A'); ?></p>
-                                            <p><strong>Teléfono:</strong> <?php echo htmlspecialchars($customer['Phone'] ?? 'N/A'); ?></p>
-                                            <?php if (!empty($customer['PersonGender'])): ?>
-                                                <p><strong>Género:</strong> <?php echo htmlspecialchars($customer['PersonGender']); ?></p>
-                                            <?php endif; ?>
-                                            <?php if (!empty($customer['PersonBirthDate'])): ?>
-                                                <p><strong>Fecha Nac.:</strong> <?php echo htmlspecialchars($customer['PersonBirthDate']); ?></p>
-                                            <?php endif; ?>
-                                        </div>
-                                        <button onclick="copyCode('<?php echo htmlspecialchars($customer['Code'] ?? ''); ?>')" 
-                                                class="mt-2 w-full bg-purple-600 hover:bg-purple-700 text-white text-xs py-1 px-2 rounded transition-all">
-                                            <i class="fas fa-copy mr-1"></i>Copiar Código
-                                        </button>
-                                    </div>
-                                <?php } ?>
-                            </div>
-                            
-                            <!-- Detalles Técnicos (colapsable) -->
-                            <details class="mt-4">
-                                <summary class="cursor-pointer text-xs text-gray-600 hover:text-gray-800 font-medium">
-                                    <i class="fas fa-code mr-1"></i>Ver respuesta técnica completa
-                                </summary>
-                                <div class="response-box p-4 mt-2">
-                                    <pre class="text-xs font-mono whitespace-pre-wrap"><?php echo htmlspecialchars(json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)); ?></pre>
-                                </div>
-                            </details>
-                            
-                        <?php elseif (isset($result['success'])): ?>
-                            <!-- Mensaje de Éxito -->
-                            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                                <p class="text-green-700 flex items-center gap-2">
-                                    <i class="fas fa-check-circle"></i>
-                                    <strong><?php echo htmlspecialchars($result['success']); ?></strong>
-                                </p>
-                            </div>
-                            
-                        <?php elseif (isset($result['error'])): ?>
-                            <!-- Mensaje de Error -->
-                            <div class="bg-red-50 border-2 border-red-300 rounded-lg p-4">
-                                <div class="flex items-start gap-3">
-                                    <i class="fas fa-exclamation-triangle text-red-600 text-xl mt-0.5"></i>
-                                    <div class="flex-1">
-                                        <p class="text-red-800 font-bold text-base mb-2">
-                                            Cliente No Encontrado
-                                        </p>
-                                        <p class="text-red-700 text-sm mb-2">
-                                            <?php echo htmlspecialchars($result['error']); ?>
-                                        </p>
-                                        <p class="text-xs text-red-600 bg-red-100 p-2 rounded">
-                                            <strong>Nota:</strong> El cliente no existe en el sistema o los datos ingresados no coinciden con ningún registro.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Detalles técnicos para errores -->
-                            <?php if (isset($result['status']) || isset($result['raw'])): ?>
-                            <details class="mt-3">
-                                <summary class="cursor-pointer text-xs text-gray-600 hover:text-gray-800 font-medium bg-gray-100 p-2 rounded">
-                                    <i class="fas fa-bug mr-1"></i>Ver detalles técnicos del error
-                                </summary>
-                                <div class="response-box p-4 mt-2">
-                                    <pre class="text-xs font-mono whitespace-pre-wrap"><?php echo htmlspecialchars(json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)); ?></pre>
-                                </div>
-                            </details>
-                            <?php endif; ?>
-                            
-                        <?php else: ?>
-                            <!-- Respuesta Genérica -->
-                            <div class="bg-yellow-50 border border-yellow-300 rounded-lg p-4 mb-3">
-                                <p class="text-yellow-800 text-sm font-semibold flex items-center gap-2">
-                                    <i class="fas fa-question-circle text-lg"></i>
-                                    Respuesta recibida pero sin datos de cliente
-                                </p>
-                                <p class="text-xs text-yellow-700 mt-1">
-                                    La API devolvió una respuesta pero no contiene información válida de cliente.
-                                </p>
-                            </div>
-                            <div class="response-box p-4">
-                                <pre class="text-xs font-mono whitespace-pre-wrap"><?php echo htmlspecialchars(json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)); ?></pre>
-                            </div>
-                        <?php endif; ?>
-                        
-                        <?php if (isset($result['status'])): ?>
-                            <div class="mt-4 p-3 rounded-lg <?php echo ($result['status'] >= 200 && $result['status'] < 300) ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'; ?>">
-                                <p class="text-sm <?php echo ($result['status'] >= 200 && $result['status'] < 300) ? 'text-green-700' : 'text-red-700'; ?>">
-                                    <strong>Estado HTTP:</strong> <?php echo htmlspecialchars($result['status']); ?>
-                                </p>
-                            </div>
-                        <?php endif; ?>
-                    <?php else: ?>
-                        <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                            <p class="text-sm text-blue-700">
-                                <i class="fas fa-info-circle mr-2"></i>
-                                Realiza una búsqueda o acción para ver la respuesta aquí.
-                            </p>
-                        </div>
-                    <?php endif; ?>
-
-                    <!-- Info Box -->
-                    <div class="mt-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                        <h4 class="font-semibold text-purple-900 mb-2">
-                            <i class="fas fa-lightbulb mr-2"></i>Consejos
-                        </h4>
-                        <ul class="text-xs text-purple-800 space-y-1">
-                            <li>✓ Usa el formulario de Búsqueda para localizar clientes</li>
-                            <li>✓ Crea nuevos clientes con datos válidos</li>
-                            <li>✓ Actualiza datos tras buscar el cliente</li>
-                            <li>✓ Verifica las respuestas en este panel</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
+<!-- ── Header ───────────────────────────────────── -->
+<header style="background:linear-gradient(135deg,#b51a8a,#71398d)" class="text-white px-6 py-3 flex items-center justify-between shadow-md">
+    <div class="flex items-center gap-3">
+        <img src="/logoZarza.webp" alt="Lazarza" class="h-9 w-auto">
+        <div>
+            <p class="font-bold text-base leading-none">API Test — Customer</p>
+            <p class="text-[11px] text-pink-200 font-mono mt-0.5"><?php echo htmlspecialchars(BASE_URL); ?></p>
         </div>
     </div>
+    <a href="/" class="text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-all">
+        <i class="fas fa-arrow-left mr-1"></i>Volver
+    </a>
+</header>
 
-    <script>
-        function showTab(tabName) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.tab-button').forEach(btn => {
-                btn.classList.remove('active');
-            });
+<div class="max-w-7xl mx-auto p-4 grid grid-cols-1 lg:grid-cols-5 gap-4 mt-2">
 
-            // Show selected tab
-            document.getElementById(tabName).classList.add('active');
-            event.target.classList.add('active');
-        }
+    <!-- ══════════ FORMS (3/5) ══════════ -->
+    <div class="lg:col-span-3 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
 
-        /**
-         * Copiar código de cliente al portapapeles
-         */
-        function copyCode(code) {
-            navigator.clipboard.writeText(code).then(() => {
-                // Mostrar notificación temporal
-                const notification = document.createElement('div');
-                notification.textContent = '✓ Código copiado: ' + code;
-                notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in';
-                document.body.appendChild(notification);
-                
-                setTimeout(() => {
-                    notification.remove();
-                }, 2000);
-            }).catch(err => {
-                alert('Error al copiar: ' + err);
-            });
-        }
+        <!-- Tab nav -->
+        <div class="flex gap-1.5 p-3 border-b border-gray-100 bg-gray-50">
+            <button class="tab-btn <?php echo !$search_mode ? 'on' : 'off'; ?>" onclick="tabSwitch('search',this)">
+                <i class="fas fa-search mr-1"></i>Buscar
+            </button>
+            <button class="tab-btn off" onclick="tabSwitch('create',this)">
+                <i class="fas fa-user-plus mr-1"></i>Crear
+            </button>
+            <button class="tab-btn <?php echo $search_mode ? 'on' : 'off'; ?>" onclick="tabSwitch('update',this)">
+                <i class="fas fa-edit mr-1"></i>Actualizar
+            </button>
+        </div>
 
-        /**
-         * Validación de formularios
-         */
-        function validateForm(formType) {
-            const prefix = formType === 'create' ? 'create' : 'update';
-            const email = document.getElementById('email-' + prefix).value;
-            const emailConfirm = document.getElementById('email-confirm-' + prefix).value;
-            const password = document.getElementById('password-' + prefix).value;
-            const passwordConfirm = document.getElementById('password-confirm-' + prefix).value;
+        <!-- ─── Buscar ─── -->
+        <div id="tab-search" class="tab-pane <?php echo !$search_mode ? 'on' : ''; ?> p-5 space-y-4">
+            <p class="text-xs text-gray-400">Busca por RFC, Email o Teléfono. Los resultados aparecen en el panel derecho.</p>
+            <form method="post" class="flex flex-wrap gap-2 items-end">
+                <div style="min-width:140px">
+                    <label class="fl">Tipo de búsqueda</label>
+                    <select name="search_type" class="fi">
+                        <option value="TaxRegNr">RFC (TaxRegNr)</option>
+                        <option value="EmailClubLazarza">Email</option>
+                        <option value="Phone">Teléfono</option>
+                    </select>
+                </div>
+                <div style="flex:2;min-width:200px">
+                    <label class="fl">Valor</label>
+                    <input type="text" name="search_value" class="fi" placeholder="Ingresa el valor" autocomplete="off">
+                </div>
+                <input type="hidden" name="action" value="search">
+                <button class="z-bg text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-all" style="align-self:flex-end">
+                    <i class="fas fa-search mr-1"></i>Buscar
+                </button>
+            </form>
 
-            // Validar coincidencia de emails
-            if (email !== emailConfirm) {
-                alert('Los correos electrónicos no coinciden. Por favor verifica.');
-                document.getElementById('email-confirm-' + prefix).focus();
-                return false;
-            }
+            <?php
+            $showResults = $result !== null
+                && isset($result['json']) && is_array($result['json'])
+                && !isset($result['error']);
+            if ($showResults):
+                $customers = $result['json'];
+                if (isset($customers['Code'])) $customers = [$customers];
+                $customers = array_filter($customers, fn($c) => !empty($c['Code']));
+            ?>
+            <div class="space-y-2 fi-anim">
+                <?php foreach ($customers as $c): ?>
+                <div class="border border-gray-200 rounded-lg p-3 flex items-start justify-between gap-3 hover:border-pink-300 transition-all">
+                    <div class="text-sm space-y-0.5 min-w-0">
+                        <p class="font-semibold text-gray-800 truncate">
+                            <?php echo htmlspecialchars("{$c['PersonName']} {$c['PersonLastName']} {$c['PersonLastName2']}"); ?>
+                        </p>
+                        <p class="text-gray-400 text-xs">
+                            <code class="bg-gray-100 px-1 rounded"><?php echo htmlspecialchars($c['Code']); ?></code>
+                            &nbsp;·&nbsp;<?php echo htmlspecialchars($c['TaxRegNr'] ?? '–'); ?>
+                            &nbsp;·&nbsp;<?php echo htmlspecialchars($c['EmailClubLazarza'] ?? '–'); ?>
+                        </p>
+                        <p class="text-gray-400 text-xs">
+                            <?php echo htmlspecialchars($c['Phone'] ?? '–'); ?>
+                            &nbsp;·&nbsp;PersonSex: <strong class="z-text"><?php
+                                $sv = $c['PersonSex'] ?? null;
+                                echo $sv === 0 || $sv === '0' ? '0 (Masculino)' : ($sv === 1 || $sv === '1' ? '1 (Femenino)' : 'null');
+                            ?></strong>
+                        </p>
+                        <p class="text-gray-400 text-xs">
+                            <i class="fas fa-envelope" style="margin-right:.2rem"></i>PromoEmails:
+                            <strong class="<?php echo $c['ClubLazarzaPromoEmails'] ? 'text-green-600' : 'text-red-400'; ?>">
+                                <?php echo $c['ClubLazarzaPromoEmails'] ? 'true' : 'false'; ?>
+                            </strong>
+                            &nbsp;·&nbsp;
+                            <i class="fab fa-whatsapp" style="margin-right:.2rem"></i>PromoWhatsApp:
+                            <strong class="<?php echo $c['ClubLazarzaPromoWhatsApp'] ? 'text-green-600' : 'text-red-400'; ?>">
+                                <?php echo $c['ClubLazarzaPromoWhatsApp'] ? 'true' : 'false'; ?>
+                            </strong>
+                        </p>
+                    </div>
+                    <button onclick="copyCode('<?php echo htmlspecialchars($c['Code']); ?>')"
+                            class="shrink-0 z-bg text-white text-xs px-2 py-1 rounded hover:opacity-80 transition-all">
+                        <i class="fas fa-copy mr-1"></i><?php echo htmlspecialchars($c['Code']); ?>
+                    </button>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+        </div>
 
-            // Validar contraseñas (solo requerido en crear o si se proporciona en actualizar)
-            if (formType === 'create' || password !== '') {
-                if (password !== passwordConfirm) {
-                    alert('Las contraseñas no coinciden. Por favor verifica.');
-                    document.getElementById('password-confirm-' + prefix).focus();
-                    return false;
-                }
+        <!-- ─── Crear ─── -->
+        <div id="tab-create" class="tab-pane p-5">
+            <form method="post" id="createForm" onsubmit="return chkForm('create')">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="fl">PersonName *</label>
+                        <input name="PersonName" required class="fi" placeholder="Juan">
+                    </div>
+                    <div>
+                        <label class="fl">PersonLastName *</label>
+                        <input name="PersonLastName" required class="fi" placeholder="Pérez">
+                    </div>
+                    <div>
+                        <label class="fl">PersonLastName2</label>
+                        <input name="PersonLastName2" class="fi" placeholder="García">
+                    </div>
+                    <div>
+                        <label class="fl">PersonBirthDate *</label>
+                        <input type="date" name="PersonBirthDate" required class="fi">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="fl">TaxRegNr <span style="text-transform:none;color:#a855f7;font-size:.65rem">auto-calculado</span></label>
+                        <input type="text" name="TaxRegNr" id="rfc-create" class="fi" style="background:#f9fafb" readonly maxlength="12" placeholder="Se calcula automáticamente">
+                    </div>
 
-                if (password.length < 8) {
-                    alert('La contraseña debe tener al menos 8 caracteres.');
-                    document.getElementById('password-' + prefix).focus();
-                    return false;
-                }
-            }
+                    <!-- PersonSex: radio buttons -->
+                    <div class="md:col-span-2">
+                        <label class="fl">PersonSex <span style="text-transform:none;color:#6b7280;font-size:.65rem">(0=Masculino, 1=Femenino)</span></label>
+                        <div class="flex flex-wrap gap-5 mt-1">
+                            <label class="radio-opt">
+                                <input type="radio" name="PersonSex" value="0" onchange="sexPreview(this,'create')"> Masculino
+                            </label>
+                            <label class="radio-opt">
+                                <input type="radio" name="PersonSex" value="1" onchange="sexPreview(this,'create')"> Femenino
+                            </label>
+                            <label class="radio-opt" style="color:#6b7280">
+                                <input type="radio" name="PersonSex" value="" checked onchange="sexPreview(this,'create')"> No especificar
+                            </label>
+                        </div>
+                        <p style="font-size:.68rem;color:#9ca3af;margin-top:.25rem">
+                            Valor enviado al API → <code id="sp-create" style="background:#f3f4f6;padding:0 .25rem;border-radius:.2rem">null</code>
+                        </p>
+                    </div>
 
-            return true;
-        }
+                    <div>
+                        <label class="fl">Phone *</label>
+                        <input type="tel" name="Phone" required class="fi" placeholder="+521234567890">
+                    </div>
+                    <div>
+                        <label class="fl">EmailClubLazarza *</label>
+                        <input type="email" name="EmailClubLazarza" id="email-create" required class="fi">
+                    </div>
+                    <div>
+                        <label class="fl">Confirmar Email *</label>
+                        <input type="email" name="EmailConfirm" id="email-confirm-create" required class="fi">
+                    </div>
+                    <div>
+                        <label class="fl">Province (Estado) *</label>
+                        <input name="Province" required class="fi" placeholder="Jalisco">
+                    </div>
+                    <div>
+                        <label class="fl">CityName (Municipio) *</label>
+                        <input name="CityName" required class="fi" placeholder="Guadalajara">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="fl">DistrictName (Colonia) *</label>
+                        <input name="DistrictName" required class="fi" placeholder="Centro">
+                    </div>
 
-        /**
-         * Función para calcular RFC automáticamente
-         */
-        function calculateRFC(nombre, apellidoPaterno, apellidoMaterno, fechaNacimiento) {
-            if (!nombre || !apellidoPaterno || !fechaNacimiento) {
-                return '';
-            }
+                    <!-- Preferencias de contacto -->
+                    <div class="md:col-span-2">
+                        <label class="fl">Preferencias de contacto</label>
+                        <div class="flex flex-wrap gap-5 mt-1">
+                            <label class="radio-opt">
+                                <input type="checkbox" name="ClubLazarzaPromoEmails" value="1" checked
+                                       style="accent-color:#b51a8a;width:1rem;height:1rem">
+                                <i class="fas fa-envelope" style="color:#6b7280;font-size:.8rem"></i> PromoEmails
+                            </label>
+                            <label class="radio-opt">
+                                <input type="checkbox" name="ClubLazarzaPromoWhatsApp" value="1" checked
+                                       style="accent-color:#b51a8a;width:1rem;height:1rem">
+                                <i class="fab fa-whatsapp" style="color:#25d366;font-size:.9rem"></i> PromoWhatsApp
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" name="action" value="create">
+                <button class="mt-4 w-full z-bg text-white py-2.5 rounded-lg font-semibold hover:opacity-90 transition-all">
+                    <i class="fas fa-plus mr-2"></i>POST /Customer
+                </button>
+            </form>
+        </div>
 
-            // Limpiar y convertir a mayúsculas
-            nombre = nombre.trim().toUpperCase();
-            apellidoPaterno = apellidoPaterno.trim().toUpperCase();
-            apellidoMaterno = (apellidoMaterno || '').trim().toUpperCase();
+        <!-- ─── Actualizar ─── -->
+        <div id="tab-update" class="tab-pane <?php echo $search_mode ? 'on' : ''; ?> p-5 space-y-4">
 
-            // Palabras a ignorar en apellidos
-            const palabrasIgnorar = ['DE', 'LA', 'LAS', 'MC', 'VON', 'DEL', 'LOS', 'Y', 'MAC'];
-            
-            // Función para limpiar apellido
-            function limpiarApellido(apellido) {
-                const partes = apellido.split(' ').filter(p => !palabrasIgnorar.includes(p));
-                return partes.join(' ') || apellido;
-            }
+            <form method="post" class="flex gap-2 items-end">
+                <div style="flex:1">
+                    <label class="fl">Código de Cliente</label>
+                    <input type="text" name="CustomerCode" class="fi" style="font-family:monospace"
+                           placeholder="VL008103"
+                           value="<?php echo htmlspecialchars($current_customer_code ?? ''); ?>">
+                </div>
+                <input type="hidden" name="action" value="search_customer">
+                <button class="text-white px-4 py-2 rounded-lg text-sm font-medium transition-all" style="background:#2563eb;align-self:flex-end">
+                    <i class="fas fa-search mr-1"></i>Cargar
+                </button>
+            </form>
 
-            apellidoPaterno = limpiarApellido(apellidoPaterno);
-            apellidoMaterno = limpiarApellido(apellidoMaterno);
+            <?php if ($search_mode && $customer_data): ?>
+            <form method="post" id="updateForm" onsubmit="return chkForm('update')" class="space-y-3" style="border-top:1px solid #f3f4f6;padding-top:1rem">
 
-            // Función para obtener primera vocal interna
-            function primeraVocalInterna(texto) {
-                const vocales = 'AEIOU';
-                for (let i = 1; i < texto.length; i++) {
-                    if (vocales.includes(texto[i])) {
-                        return texto[i];
-                    }
-                }
-                return 'X';
-            }
+                <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:.5rem;padding:.5rem .75rem;font-size:.8rem;color:#92400e">
+                    <i class="fas fa-edit mr-1"></i>Editando:
+                    <code style="font-weight:700"><?php echo htmlspecialchars($customer_data['Code'] ?? $current_customer_code); ?></code>
+                </div>
 
-            // Construir las primeras 4 letras
-            let rfc = '';
-            
-            // Primera letra y primera vocal interna del apellido paterno
-            rfc += apellidoPaterno[0];
-            rfc += primeraVocalInterna(apellidoPaterno);
-            
-            // Primera letra del apellido materno (o X si no existe)
-            rfc += apellidoMaterno ? apellidoMaterno[0] : 'X';
-            
-            // Primera letra del nombre
-            const nombrePartes = nombre.split(' ');
-            const primerNombre = nombrePartes[0];
-            // Ignorar nombres comunes
-            if (['MARIA', 'JOSE', 'MA', 'MA.', 'J', 'J.'].includes(primerNombre) && nombrePartes.length > 1) {
-                rfc += nombrePartes[1][0];
-            } else {
-                rfc += primerNombre[0];
-            }
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="fl">PersonName *</label>
+                        <input name="PersonName" required class="fi"
+                               value="<?php echo htmlspecialchars($customer_data['PersonName'] ?? ''); ?>">
+                    </div>
+                    <div>
+                        <label class="fl">PersonLastName *</label>
+                        <input name="PersonLastName" required class="fi"
+                               value="<?php echo htmlspecialchars($customer_data['PersonLastName'] ?? ''); ?>">
+                    </div>
+                    <div>
+                        <label class="fl">PersonLastName2</label>
+                        <input name="PersonLastName2" class="fi"
+                               value="<?php echo htmlspecialchars($customer_data['PersonLastName2'] ?? ''); ?>">
+                    </div>
+                    <div>
+                        <label class="fl">PersonBirthDate *</label>
+                        <input type="date" name="PersonBirthDate" required class="fi"
+                               value="<?php echo htmlspecialchars($customer_data['PersonBirthDate'] ?? ''); ?>">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="fl">TaxRegNr</label>
+                        <input type="text" name="TaxRegNr" id="rfc-update" class="fi" style="background:#f9fafb" readonly maxlength="12"
+                               value="<?php echo htmlspecialchars($customer_data['TaxRegNr'] ?? ''); ?>">
+                    </div>
 
-            // Agregar fecha de nacimiento (AAMMDD)
-            const fecha = new Date(fechaNacimiento + 'T00:00:00');
-            const year = fecha.getFullYear().toString().substr(-2);
-            const month = String(fecha.getMonth() + 1).padStart(2, '0');
-            const day = String(fecha.getDate()).padStart(2, '0');
-            
-            rfc += year + month + day;
+                    <!-- PersonSex: radio buttons -->
+                    <div class="md:col-span-2">
+                        <?php
+                            $curSex = $customer_data['PersonSex'] ?? '';
+                            $isMasc = ($curSex === 0 || $curSex === '0');
+                            $isFem  = ($curSex === 1 || $curSex === '1');
+                            $isNone = !$isMasc && !$isFem;
+                            $sexPreviewVal = $isMasc ? '0' : ($isFem ? '1' : 'null');
+                        ?>
+                        <label class="fl">PersonSex <span style="text-transform:none;color:#6b7280;font-size:.65rem">(0=Masculino, 1=Femenino)</span></label>
+                        <div class="flex flex-wrap gap-5 mt-1">
+                            <label class="radio-opt">
+                                <input type="radio" name="PersonSex" value="0"
+                                       <?php echo $isMasc ? 'checked' : ''; ?>
+                                       onchange="sexPreview(this,'update')"> Masculino
+                            </label>
+                            <label class="radio-opt">
+                                <input type="radio" name="PersonSex" value="1"
+                                       <?php echo $isFem ? 'checked' : ''; ?>
+                                       onchange="sexPreview(this,'update')"> Femenino
+                            </label>
+                            <label class="radio-opt" style="color:#6b7280">
+                                <input type="radio" name="PersonSex" value=""
+                                       <?php echo $isNone ? 'checked' : ''; ?>
+                                       onchange="sexPreview(this,'update')"> No especificar
+                            </label>
+                        </div>
+                        <p style="font-size:.68rem;color:#9ca3af;margin-top:.25rem">
+                            Valor enviado al API → <code id="sp-update" style="background:#f3f4f6;padding:0 .25rem;border-radius:.2rem"><?php echo $sexPreviewVal; ?></code>
+                        </p>
+                    </div>
 
-            // Agregar homoclave genérica (XXX para ser asignada por el SAT)
-            rfc += 'XXX';
+                    <div>
+                        <label class="fl">Phone *</label>
+                        <input type="tel" name="Phone" required class="fi"
+                               value="<?php echo htmlspecialchars($customer_data['Phone'] ?? ''); ?>">
+                    </div>
+                    <div>
+                        <label class="fl">EmailClubLazarza *</label>
+                        <input type="email" name="EmailClubLazarza" id="email-update" required class="fi"
+                               value="<?php echo htmlspecialchars($customer_data['EmailClubLazarza'] ?? ''); ?>">
+                    </div>
+                    <div>
+                        <label class="fl">Confirmar Email *</label>
+                        <input type="email" name="EmailConfirm" id="email-confirm-update" required class="fi"
+                               value="<?php echo htmlspecialchars($customer_data['EmailClubLazarza'] ?? ''); ?>">
+                    </div>
+                    <div>
+                        <label class="fl">Province (Estado) *</label>
+                        <input name="Province" required class="fi"
+                               value="<?php echo htmlspecialchars($customer_data['Province'] ?? ''); ?>">
+                    </div>
+                    <div>
+                        <label class="fl">CityName (Municipio) *</label>
+                        <input name="CityName" required class="fi"
+                               value="<?php echo htmlspecialchars($customer_data['CityName'] ?? ''); ?>">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="fl">DistrictName (Colonia) *</label>
+                        <input name="DistrictName" required class="fi"
+                               value="<?php echo htmlspecialchars($customer_data['DistrictName'] ?? ''); ?>">
+                    </div>
 
-            // Validar palabras inconvenientes
-            const palabrasInconvenientes = [
-                'BUEI', 'BUEY', 'CACA', 'CACO', 'CAGA', 'CAGO', 'CAKA', 'CAKO',
-                'COGE', 'COJA', 'COJE', 'COJI', 'COJO', 'CULA', 'CULO', 'FETO',
-                'GUEY', 'JOTO', 'KACA', 'KACO', 'KAGA', 'KAGO', 'KAKA', 'KOGE',
-                'KOJO', 'KULO', 'MAME', 'MAMO', 'MEAR', 'MEAS', 'MEON', 'MION',
-                'MOCO', 'MULA', 'PEDA', 'PEDO', 'PENE', 'PUTA', 'PUTO', 'QULO',
-                'RATA', 'RUIN'
-            ];
+                    <!-- Preferencias de contacto -->
+                    <div class="md:col-span-2">
+                        <label class="fl">Preferencias de contacto</label>
+                        <div class="flex flex-wrap gap-5 mt-1">
+                            <label class="radio-opt">
+                                <input type="checkbox" name="ClubLazarzaPromoEmails" value="1"
+                                       <?php echo !empty($customer_data['ClubLazarzaPromoEmails']) ? 'checked' : ''; ?>
+                                       style="accent-color:#b51a8a;width:1rem;height:1rem">
+                                <i class="fas fa-envelope" style="color:#6b7280;font-size:.8rem"></i> PromoEmails
+                            </label>
+                            <label class="radio-opt">
+                                <input type="checkbox" name="ClubLazarzaPromoWhatsApp" value="1"
+                                       <?php echo !empty($customer_data['ClubLazarzaPromoWhatsApp']) ? 'checked' : ''; ?>
+                                       style="accent-color:#b51a8a;width:1rem;height:1rem">
+                                <i class="fab fa-whatsapp" style="color:#25d366;font-size:.9rem"></i> PromoWhatsApp
+                            </label>
+                        </div>
+                    </div>
+                </div>
 
-            if (palabrasInconvenientes.includes(rfc.substr(0, 4))) {
-                rfc = rfc[0] + 'X' + rfc.substr(2);
-            }
+                <input type="hidden" name="CustomerCode" value="<?php echo htmlspecialchars($current_customer_code); ?>">
+                <input type="hidden" name="action" value="update">
+                <div class="flex gap-2 pt-1">
+                    <button type="submit" class="flex-1 z-bg text-white py-2.5 rounded-lg font-semibold hover:opacity-90 transition-all">
+                        <i class="fas fa-save mr-2"></i>PUT /Customer/<?php echo htmlspecialchars($current_customer_code); ?>
+                    </button>
+                    <button type="button" onclick="document.getElementById('cancelForm').submit()"
+                            title="Cancelar" style="background:#d1d5db;color:#374151;padding:.625rem .875rem;border-radius:.5rem;transition:all .15s"
+                            onmouseover="this.style.background='#9ca3af'" onmouseout="this.style.background='#d1d5db'">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </form>
+            <form id="cancelForm" method="post" style="display:none">
+                <input type="hidden" name="action" value="clear_customer">
+            </form>
+            <?php endif; ?>
 
-            return rfc;
-        }
+        </div>
 
-        /**
-         * Configurar listeners para campos del formulario de CREAR
-         */
-        document.addEventListener('DOMContentLoaded', function() {
-            const createForm = document.querySelector('#create form');
-            if (createForm) {
-                const nombreInput = createForm.querySelector('[name="PersonName"]');
-                const apellidoPaternoInput = createForm.querySelector('[name="PersonLastName"]');
-                const apellidoMaternoInput = createForm.querySelector('[name="PersonLastName2"]');
-                const fechaNacimientoInput = createForm.querySelector('[name="PersonBirthDate"]');
-                const rfcInput = document.getElementById('rfc-create');
+    </div><!-- /forms -->
 
-                function actualizarRFC() {
-                    const rfc = calculateRFC(
-                        nombreInput.value,
-                        apellidoPaternoInput.value,
-                        apellidoMaternoInput.value,
-                        fechaNacimientoInput.value
-                    );
-                    
-                    if (rfc && rfcInput) {
-                        rfcInput.value = rfc;
-                        rfcInput.classList.add('bg-green-100', 'border-green-400');
-                        setTimeout(() => {
-                            rfcInput.classList.remove('bg-green-100', 'border-green-400');
-                        }, 1500);
-                    }
-                }
+    <!-- ══════════ DEBUG PANEL (2/5) ══════════ -->
+    <div class="lg:col-span-2 space-y-3">
 
-                [nombreInput, apellidoPaternoInput, apellidoMaternoInput, fechaNacimientoInput].forEach(input => {
-                    if (input) {
-                        input.addEventListener('blur', actualizarRFC);
-                        input.addEventListener('change', actualizarRFC);
-                        input.addEventListener('input', function() {
-                            // Calcular en tiempo real para fecha de nacimiento
-                            if (this.name === 'PersonBirthDate') {
-                                actualizarRFC();
-                            }
-                        });
-                    }
-                });
-            }
+        <?php if ($result !== null): ?>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 fi-anim">
 
-            // Configurar listeners para el formulario de ACTUALIZAR
-            // Observar cambios en el DOM para cuando se cargue el formulario de actualización
-            const observer = new MutationObserver(function() {
-                const updateFormContainer = document.querySelector('#update form[method="post"]:last-of-type');
-                if (updateFormContainer && !updateFormContainer.dataset.rfcConfigured) {
-                    updateFormContainer.dataset.rfcConfigured = 'true';
-                    
-                    const nombreInput = updateFormContainer.querySelector('[name="PersonName"]');
-                    const apellidoPaternoInput = updateFormContainer.querySelector('[name="PersonLastName"]');
-                    const apellidoMaternoInput = updateFormContainer.querySelector('[name="PersonLastName2"]');
-                    const fechaNacimientoInput = updateFormContainer.querySelector('[name="PersonBirthDate"]');
-                    const rfcInput = document.getElementById('rfc-update');
+            <!-- Status + endpoint -->
+            <div class="flex items-center gap-2 mb-3 flex-wrap">
+                <?php if (isset($result['status'])): ?>
+                <span class="<?php echo ($result['status'] >= 200 && $result['status'] < 300) ? 'bok' : 'berr'; ?>">
+                    HTTP <?php echo (int)$result['status']; ?>
+                </span>
+                <?php endif; ?>
+                <?php if (isset($result['_method'], $result['_url'])): ?>
+                <span class="binfo"><?php echo htmlspecialchars($result['_method']); ?></span>
+                <span style="font-size:.7rem;color:#9ca3af;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px">
+                    <?php echo htmlspecialchars(str_replace(BASE_URL, '', $result['_url'])); ?>
+                </span>
+                <?php endif; ?>
+            </div>
 
-                    function actualizarRFCUpdate() {
-                        const rfc = calculateRFC(
-                            nombreInput.value,
-                            apellidoPaternoInput.value,
-                            apellidoMaternoInput.value,
-                            fechaNacimientoInput.value
-                        );
-                        
-                        if (rfc && rfcInput) {
-                            rfcInput.value = rfc;
-                            rfcInput.classList.add('bg-green-100', 'border-green-400');
-                            setTimeout(() => {
-                                rfcInput.classList.remove('bg-green-100', 'border-green-400');
-                            }, 1500);
-                        }
-                    }
+            <!-- Message -->
+            <?php if (isset($result['success'])): ?>
+            <p style="font-size:.82rem;color:#15803d;font-weight:600;margin-bottom:.75rem;display:flex;align-items:center;gap:.35rem">
+                <i class="fas fa-check-circle" style="color:#22c55e"></i>
+                <?php echo htmlspecialchars($result['success']); ?>
+            </p>
+            <?php elseif (isset($result['error'])): ?>
+            <p style="font-size:.82rem;color:#b91c1c;font-weight:600;margin-bottom:.75rem;display:flex;align-items:center;gap:.35rem">
+                <i class="fas fa-exclamation-circle" style="color:#ef4444"></i>
+                <?php echo htmlspecialchars($result['error']); ?>
+            </p>
+            <?php endif; ?>
 
-                    [nombreInput, apellidoPaternoInput, apellidoMaternoInput, fechaNacimientoInput].forEach(input => {
-                        if (input) {
-                            input.addEventListener('blur', actualizarRFCUpdate);
-                            input.addEventListener('change', actualizarRFCUpdate);
-                            input.addEventListener('input', function() {
-                                // Calcular en tiempo real para fecha de nacimiento
-                                if (this.name === 'PersonBirthDate') {
-                                    actualizarRFCUpdate();
-                                }
-                            });
-                        }
-                    });
-                }
-            });
-            
-            observer.observe(document.body, { childList: true, subtree: true });
-        });
-    </script>
+            <!-- Request body -->
+            <?php if (!empty($result['_sent_body'])): ?>
+            <div style="margin-bottom:.75rem">
+                <p style="font-size:.65rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem">
+                    <i class="fas fa-paper-plane" style="color:#60a5fa;margin-right:.25rem"></i>Request Body
+                </p>
+                <div class="cbox"><?php
+                    $s = json_decode($result['_sent_body'], true);
+                    echo htmlspecialchars(json_encode($s, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                ?></div>
+            </div>
+            <?php endif; ?>
+
+            <!-- Response body -->
+            <?php if (!empty($result['raw'])): ?>
+            <div>
+                <p style="font-size:.65rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem">
+                    <i class="fas fa-reply" style="color:#c084fc;margin-right:.25rem"></i>Response Body
+                </p>
+                <div class="cbox"><?php
+                    $r = json_decode($result['raw'], true);
+                    echo htmlspecialchars($r !== null
+                        ? json_encode($r, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+                        : $result['raw']);
+                ?></div>
+            </div>
+            <?php endif; ?>
+
+        </div>
+        <?php else: ?>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center" style="color:#9ca3af">
+            <i class="fas fa-satellite-dish" style="font-size:2rem;display:block;margin-bottom:.5rem"></i>
+            <p style="font-size:.82rem">Realiza una acción para ver<br>la respuesta del API aquí</p>
+        </div>
+        <?php endif; ?>
+
+        <!-- Endpoints reference -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <p style="font-size:.65rem;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem">Endpoints</p>
+            <ul style="font-size:.72rem;font-family:monospace;color:#4b5563;line-height:1.7">
+                <li><span style="color:#16a34a;font-weight:700">GET</span>  /Customer?TaxRegNr=</li>
+                <li><span style="color:#16a34a;font-weight:700">GET</span>  /Customer?EmailClubLazarza=</li>
+                <li><span style="color:#16a34a;font-weight:700">GET</span>  /Customer?Phone=</li>
+                <li><span style="color:#2563eb;font-weight:700">POST</span> /Customer</li>
+                <li><span style="color:#d97706;font-weight:700">PUT</span>  /Customer/{code}</li>
+            </ul>
+        </div>
+
+    </div><!-- /debug panel -->
+
+</div><!-- /grid -->
+
+<div id="notif" style="display:none;position:fixed;top:1rem;right:1rem;background:#16a34a;color:#fff;font-size:.82rem;padding:.5rem 1rem;border-radius:.5rem;box-shadow:0 4px 12px rgba(0,0,0,.2);z-index:50"></div>
+
+<script>
+/* ── Tabs ─────────────────────────── */
+function tabSwitch(name, btn) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('on'));
+    document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('on'); b.classList.add('off'); });
+    document.getElementById('tab-' + name).classList.add('on');
+    btn.classList.add('on'); btn.classList.remove('off');
+}
+
+/* ── PersonSex preview ────────────── */
+function sexPreview(radio, prefix) {
+    const el = document.getElementById('sp-' + prefix);
+    if (el) el.textContent = radio.value !== '' ? radio.value : 'null';
+}
+
+/* ── Copy code notification ────────── */
+function copyCode(code) {
+    navigator.clipboard.writeText(code).then(() => {
+        const n = document.getElementById('notif');
+        n.textContent = '✓ Copiado: ' + code;
+        n.style.display = 'block';
+        setTimeout(() => n.style.display = 'none', 2000);
+    });
+}
+
+/* ── Form validation ──────────────── */
+function chkForm(type) {
+    const p   = type === 'create' ? 'create' : 'update';
+    const em1 = document.getElementById('email-' + p)?.value ?? '';
+    const em2 = document.getElementById('email-confirm-' + p)?.value ?? '';
+    if (em1 !== em2) { alert('Los correos no coinciden'); return false; }
+    return true;
+}
+
+/* ── RFC auto-calc ────────────────── */
+function calcRFC(n, a1, a2, bd) {
+    if (!n || !a1 || !bd) return '';
+    const skip  = ['DE','LA','LAS','MC','VON','DEL','LOS','Y','MAC'];
+    const clean = s => s.trim().toUpperCase().split(' ').filter(w => !skip.includes(w)).join(' ') || s.toUpperCase();
+    const vowel = s => { for (let i=1;i<s.length;i++) if('AEIOU'.includes(s[i])) return s[i]; return 'X'; };
+    a1 = clean(a1); a2 = clean(a2||''); n = n.trim().toUpperCase();
+    let r = a1[0] + vowel(a1) + (a2 ? a2[0] : 'X');
+    const pts = n.split(' ');
+    r += (['JOSE','MARIA','MA','MA.','J','J.'].includes(pts[0]) && pts.length > 1) ? pts[1][0] : pts[0][0];
+    const d = new Date(bd + 'T00:00:00');
+    r += String(d.getFullYear()).slice(-2) + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0') + 'XX';
+    const bad = ['BUEI','BUEY','CACA','COGE','CULO','FETO','GUEY','JOTO','MEAR','MEON','PUTA','PUTO','RATA'];
+    return bad.includes(r.slice(0,4)) ? r[0]+'X'+r.slice(2) : r;
+}
+function bindRFC(sel, rfcId) {
+    const f = document.querySelector(sel); if (!f) return;
+    const fn = f.querySelector('[name="PersonName"]');
+    const l1 = f.querySelector('[name="PersonLastName"]');
+    const l2 = f.querySelector('[name="PersonLastName2"]');
+    const bd = f.querySelector('[name="PersonBirthDate"]');
+    const rc = document.getElementById(rfcId);
+    const upd = () => { const v = calcRFC(fn?.value, l1?.value, l2?.value, bd?.value); if (v && rc) { rc.value = v; rc.style.color='#b51a8a'; } };
+    [fn, l1, l2, bd].forEach(el => el?.addEventListener('input', upd));
+}
+document.addEventListener('DOMContentLoaded', () => {
+    bindRFC('#tab-create form', 'rfc-create');
+    bindRFC('#updateForm', 'rfc-update');
+});
+</script>
+
 </body>
 </html>

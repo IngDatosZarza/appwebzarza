@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Administración - Puntos</title>
+    <title>Panel de Administración</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -17,7 +17,7 @@
                 <div class="flex items-center">
                     <a href="/" class="flex items-center space-x-2">
                         <i class="fas fa-star text-indigo-600 text-xl"></i>
-                        <span class="font-bold text-xl text-gray-900">Sistema de Puntos</span>
+                        <span class="font-bold text-xl text-gray-900">Sistema de Fidelidad</span>
                     </a>
                     <span class="ml-4 px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">ADMIN</span>
                 </div>
@@ -39,8 +39,8 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Header -->
         <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Panel de Administración - Puntos</h1>
-            <p class="mt-2 text-gray-600">Gestiona el sistema de puntos y monitorea las transacciones</p>
+            <h1 class="text-3xl font-bold text-gray-900">Panel de Administración</h1>
+            <p class="mt-2 text-gray-600">Gestiona el sistema y monitorea las transacciones</p>
         </div>
 
         <!-- Stats Grid -->
@@ -69,7 +69,7 @@
                         </div>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Puntos en Circulación</p>
+                        <p class="text-sm font-medium text-gray-600">Actividad Total</p>
                         <p class="text-3xl font-bold text-gray-900"><?= number_format($stats['total_points'] ?? 0) ?></p>
                     </div>
                 </div>
@@ -124,7 +124,7 @@
                                     Tipo
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Puntos
+                                    Cantidad
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Fecha
@@ -192,7 +192,7 @@
             <!-- Top Users -->
             <div class="bg-white rounded-lg shadow-sm border border-gray-200">
                 <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-lg font-semibold text-gray-900">Top Usuarios por Puntos</h2>
+                    <h2 class="text-lg font-semibold text-gray-900">Top Usuarios</h2>
                 </div>
                 
                 <div class="p-6">
@@ -223,7 +223,7 @@
                                         <p class="text-lg font-bold text-indigo-600">
                                             <?= number_format($user['saldo']) ?>
                                         </p>
-                                        <p class="text-xs text-gray-500">puntos</p>
+                                        <p class="text-xs text-gray-500">saldo</p>
                                     </div>
                                 </div>
                             <?php endforeach; ?>

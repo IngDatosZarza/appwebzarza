@@ -19,13 +19,13 @@ class CodigoPostalController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => $estados
-            ]);
+            ], 200, ['Content-Type' => 'application/json; charset=utf-8'], JSON_UNESCAPED_UNICODE);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener estados',
                 'error' => $e->getMessage()
-            ], 500);
+            ], 500, ['Content-Type' => 'application/json; charset=utf-8'], JSON_UNESCAPED_UNICODE);
         }
     }
 
@@ -44,13 +44,13 @@ class CodigoPostalController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => $municipios
-            ]);
+            ], 200, ['Content-Type' => 'application/json; charset=utf-8'], JSON_UNESCAPED_UNICODE);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener municipios',
                 'error' => $e->getMessage()
-            ], 500);
+            ], 500, ['Content-Type' => 'application/json; charset=utf-8'], JSON_UNESCAPED_UNICODE);
         }
     }
 
@@ -73,13 +73,13 @@ class CodigoPostalController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => $colonias
-            ]);
+            ], 200, ['Content-Type' => 'application/json; charset=utf-8'], JSON_UNESCAPED_UNICODE);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener colonias',
                 'error' => $e->getMessage()
-            ], 500);
+            ], 500, ['Content-Type' => 'application/json; charset=utf-8'], JSON_UNESCAPED_UNICODE);
         }
     }
 
@@ -99,19 +99,19 @@ class CodigoPostalController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'No se encontraron resultados para este código postal'
-                ], 404);
+                ], 404, ['Content-Type' => 'application/json; charset=utf-8'], JSON_UNESCAPED_UNICODE);
             }
             
             return response()->json([
                 'success' => true,
                 'data' => $resultados
-            ]);
+            ], 200, ['Content-Type' => 'application/json; charset=utf-8'], JSON_UNESCAPED_UNICODE);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error al buscar código postal',
                 'error' => $e->getMessage()
-            ], 500);
+            ], 500, ['Content-Type' => 'application/json; charset=utf-8'], JSON_UNESCAPED_UNICODE);
         }
     }
 }

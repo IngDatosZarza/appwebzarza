@@ -204,7 +204,7 @@ class TransactionController
             
             // Obtener cupones disponibles
             $coupons = Cupon::select('id', 'nombre', 'descripcion', 'puntos_requeridos', 'fecha_inicio', 'fecha_fin')
-                ->where('activo', true)
+                ->whereRaw('"activo" = true')
                 ->whereDate('fecha_inicio', '<=', DB::raw('CURRENT_DATE'))
                 ->whereDate('fecha_fin', '>=', DB::raw('CURRENT_DATE'))
                 ->orderBy('puntos_requeridos', 'ASC')
@@ -250,7 +250,7 @@ class TransactionController
             // Verificar cupón y puntos requeridos
             $coupon = Cupon::select('nombre', 'descripcion', 'puntos_requeridos')
                 ->where('id', $couponId)
-                ->where('activo', true)
+                ->whereRaw('"activo" = true')
                 ->whereDate('fecha_inicio', '<=', DB::raw('CURRENT_DATE'))
                 ->whereDate('fecha_fin', '>=', DB::raw('CURRENT_DATE'))
                 ->first();
