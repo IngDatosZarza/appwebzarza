@@ -35,6 +35,16 @@ class Sucursal extends Model
         return $this->hasMany(Redencion::class);
     }
 
+    public function administradores()
+    {
+        return $this->hasMany(Administrador::class);
+    }
+
+    public function clientesRegistrados()
+    {
+        return $this->hasMany(Usuario::class, 'sucursal_registro_id');
+    }
+
     // Scopes
     public function scopePorCodigo($query, $codigo)
     {

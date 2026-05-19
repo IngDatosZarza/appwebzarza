@@ -328,4 +328,95 @@ class OppenApiService
             'status' => $status,
         ];
     }
+
+    /**
+     * Obtener información de una sucursal (Office) desde Oppen por código.
+     * @param string $code - Código de la sucursal (ej: LZ0125)
+     * @return array|null - Datos de la sucursal o null si no existe/está cerrada
+     */
+    public function obtenerSucursal(string $code): ?array
+    {
+        $result = $this->apiRequest('GET', "Office/{$code}");
+
+        if (isset($result['error'])) {
+            return null;
+        }
+
+        $status = $result['status'] ?? 0;
+        if ($status === 404) {
+            return null; // Sucursal no existe
+        }
+
+        if ($status >= 200 && $status < 300) {
+            $json = $result['json'] ?? null;
+            
+            // Verificar que tenga los campos necesarios y no esté cerrada
+            if ($json && isset($json['Code']) && isset($json['Name']) && !($json['Closed'] ?? false)) {
+                return $json;
+            }
+        }
+
+        return null;
+    }
+
+    // ========== PROMOCIONES ==========
+
+    /**
+     * Obtener todas las promociones desde Oppen.
+     * La API devuelve un array de objetos PromotionRecord.
+     */
+    public function obtenerPromociones(): array
+    {
+        $result = $this->apiRequest('GET', 'PromotionRecord');
+
+        if (isset($result['error'])) {
+            Log::error('Oppen API: error al obtener promociones', ['error' => $result['error']]);
+            return [];
+        }
+
+        $status = $result['status'] ?? 0;
+        if ($status < 200 || $status >= 300) {
+            Log::warning('Oppen API: respuesta no exitosa al obtener promociones', ['status' => $status]);
+            return [];
+        }
+
+        $json = $result['json'] ?? [];
+
+        // La API devuelve { data: [...], records_returned, has_more }
+        if (isset($json['data']) && is_array($json['data'])) {
+            return $json['data'];
+        }
+
+        // Si devuelve un array directo
+        if (isset($json[0])) {
+            return $json;
+        }
+
+        // Si devuelve un solo registro (no array), envolverlo
+        if (isset($json['Code'])) {
+            return [$json];
+        }
+
+        return [];
+    }
+
+    /**
+     * Obtener una promoción específica por código desde Oppen.
+     */
+    public function obtenerPromocion(string $code): ?array
+    {
+        $result = $this->apiRequest('GET', "PromotionRecord/{$code}");
+
+        if (isset($result['error'])) {
+            return null;
+        }
+
+        $status = $result['status'] ?? 0;
+        if ($status >= 200 && $status < 300) {
+            return $result['json'] ?? null;
+        }
+
+        return null;
+    }
 }
+

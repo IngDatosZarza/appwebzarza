@@ -263,6 +263,15 @@ class AuthController extends Controller
             // 3) Crear usuario en la base de datos local
             DB::beginTransaction();
 
+            // Detectar tipo de dispositivo basado en User-Agent
+            $userAgent = $request->userAgent();
+            $dispositivo = 'desktop'; // Por defecto
+            if (preg_match('/mobile|android|iphone|ipod|blackberry|opera mini|iemobile/i', $userAgent)) {
+                $dispositivo = 'mobile';
+            } elseif (preg_match('/tablet|ipad|playbook|silk/i', $userAgent)) {
+                $dispositivo = 'tablet';
+            }
+
             $usuario = Usuario::create([
                 'nombres' => $request->nombres,
                 'apellido_paterno' => $request->apellido_paterno,
@@ -278,6 +287,11 @@ class AuthController extends Controller
                 'rol' => 'cliente',
                 'club_zarza' => 't',
                 'oppen_customer_id' => $oppenCustomerCode,
+                // Campos de tracking
+                'origen_registro' => 'autoregistro',
+                'dispositivo_registro' => $dispositivo,
+                'user_agent' => $userAgent,
+                'ip_registro' => $request->ip(),
             ]);
 
             // Crear dirección (usar valores por defecto si no se proporcionan calle/numero)
@@ -533,6 +547,8 @@ class AuthController extends Controller
 
             // Campos opcionales
             'genero' => 'nullable|in:masculino,femenino,otro',
+            'promo_email' => 'nullable|boolean',
+            'promo_whatsapp' => 'nullable|boolean',
         ], [
             'nombres.required' => 'El nombre es obligatorio.',
             'apellido_paterno.required' => 'El apellido paterno es obligatorio.',
@@ -581,7 +597,7 @@ class AuthController extends Controller
                 throw new \Exception("Código postal no encontrado");
             }
 
-            // Preparar datos para API Oppen
+            // Preparar datos para API Oppen (incluyendo preferencias de marketing)
             $datosCliente = [
                 'nombres'          => $request->nombres,
                 'apellido_paterno' => $request->apellido_paterno,
@@ -595,8 +611,9 @@ class AuthController extends Controller
                 'municipio'        => $cpDataAdmin->municipio,
                 'colonia'          => $request->colonia,
                 'calle'            => $request->calle ?? 'Sin especificar',
-                'promo_email'      => $request->boolean('promo_email'),
-                'promo_whatsapp'   => $request->boolean('promo_whatsapp'),
+                'promo_email'      => (bool)($request->promo_email ?? false),
+                'promo_whatsapp'   => (bool)($request->promo_whatsapp ?? false),
+                // Nota: campana_id es solo para tracking interno, no se envía a Oppen
             ];
 
             // Crear cliente en API Oppen
@@ -617,10 +634,19 @@ class AuthController extends Controller
                 }
             }
 
+            // Detectar tipo de dispositivo basado en User-Agent
+            $userAgent = $request->userAgent();
+            $dispositivo = 'desktop'; // Por defecto
+            if (preg_match('/mobile|android|iphone|ipod|blackberry|opera mini|iemobile/i', $userAgent)) {
+                $dispositivo = 'mobile';
+            } elseif (preg_match('/tablet|ipad|playbook|silk/i', $userAgent)) {
+                $dispositivo = 'tablet';
+            }
+
             DB::beginTransaction();
 
-            // Crear usuario
-            $usuario = Usuario::create([
+            // Preparar datos de usuario con tracking
+            $datosUsuario = [
                 'nombres' => $request->nombres,
                 'apellido_paterno' => $request->apellido_paterno,
                 'apellido_materno' => $request->apellido_materno,
@@ -633,7 +659,17 @@ class AuthController extends Controller
                 'rol' => 'cliente',
                 'club_zarza' => 't',
                 'oppen_customer_id' => $oppenCustomerCode,
-            ]);
+                // Campos de tracking
+                'origen_registro' => $request->campana_id ? 'campana' : 'admin_sucursal',
+                'dispositivo_registro' => $dispositivo,
+                'registrado_por_admin_id' => Session::get('user_id'),
+                'campana_id' => $request->campana_id,
+                'user_agent' => $userAgent,
+                'ip_registro' => $request->ip(),
+            ];
+
+            // Crear usuario
+            $usuario = Usuario::create($datosUsuario);
 
             // Crear dirección (usar valores por defecto si no se proporcionan calle/numero)
             Direccion::create([
@@ -677,8 +713,23 @@ class AuthController extends Controller
                 'admin_id' => Session::get('user_id')
             ]);
 
+            // Enviar correo de bienvenida
+            try {
+                Mail::to($usuario->email)->send(new WelcomeMail($usuario));
+                Log::info('Correo de bienvenida enviado exitosamente', [
+                    'cliente_id' => $usuario->id,
+                    'email' => $usuario->email
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('No se pudo enviar el correo de bienvenida', [
+                    'cliente_id' => $usuario->id,
+                    'email' => $usuario->email,
+                    'error' => $e->getMessage()
+                ]);
+            }
+
             return redirect()->route('admin.clients.create')->with('success', 
-                '✅ Cliente registrado exitosamente. Email: ' . $request->email . ' - ID: ' . $usuario->id);
+                '✅ Cliente registrado exitosamente. Email: ' . $request->email . ' - ID: ' . $usuario->id . '. Se ha enviado un correo de bienvenida.');
 
         } catch (\Exception $e) {
             DB::rollBack();

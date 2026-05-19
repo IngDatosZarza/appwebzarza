@@ -26,20 +26,22 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
         .header {
+            background: #ffffff;
+            padding: 32px 32px 0 32px;
+            text-align: center;
+            border-bottom: 4px solid transparent;
+            border-image: linear-gradient(135deg, #71398d 0%, #b51a8a 100%) 1;
+        }
+        .header-stripe {
             background: linear-gradient(135deg, #71398d 0%, #b51a8a 100%);
-            padding: 40px 32px;
+            padding: 14px 32px;
             text-align: center;
         }
-        .header h1 {
-            color: #ffffff;
-            font-size: 26px;
-            margin: 0 0 8px 0;
-            font-weight: 700;
-        }
-        .header p {
-            color: rgba(255,255,255,0.85);
-            font-size: 15px;
+        .header-stripe p {
+            color: rgba(255,255,255,0.92);
+            font-size: 14px;
             margin: 0;
+            letter-spacing: 0.5px;
         }
         .body {
             padding: 36px 32px;
@@ -121,7 +123,9 @@
     <div class="wrapper">
         <div class="container">
             <div class="header">
-                <h1>🌿 La Zarza Contigo</h1>
+                <img src="{{ url('/lazarzacontigoblack.png') }}" alt="La Zarza Contigo" width="220" style="display:block; margin:0 auto 20px auto; max-width:100%;">
+            </div>
+            <div class="header-stripe">
                 <p>Tu programa de fidelización</p>
             </div>
 
@@ -146,7 +150,7 @@
                 <p class="text">
                     Inicia sesión y visita la sección <strong>Mi Tarjeta</strong> para ver
                     tu código QR personal. Preséntalo en cualquier sucursal para que el
-                    equipo de La Zarza te identifique.
+                    equipo de <strong>La Zarza</strong> te identifique.
                 </p>
 
                 <div style="text-align:center;">
@@ -166,7 +170,8 @@
             </div>
 
             <div class="footer">
-                <p>La Zarza Contigo &bull; Programa de Fidelización<br/>
+                <p><img src="{{ url('/lazarzacontigoblack.png') }}" alt="La Zarza Contigo" width="140" style="display:block; margin:0 auto 8px auto; opacity:0.65;"><br/>
+                Programa de Fidelización<br/>
                 Este mensaje fue generado automáticamente, por favor no respondas a este correo.</p>
             </div>
         </div>

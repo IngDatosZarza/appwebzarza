@@ -14,12 +14,16 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             '/login',
             '/register',
+            '/admin/login',
         ]);
         
         // Registrar middleware personalizado
         $middleware->alias([
             'custom.auth' => \App\Http\Middleware\CustomAuth::class,
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'admin.auth' => \App\Http\Middleware\AdminAuthMiddleware::class,
+            'superadmin' => \App\Http\Middleware\SuperadminMiddleware::class,
+            'admin.sucursal' => \App\Http\Middleware\AdminSucursalMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

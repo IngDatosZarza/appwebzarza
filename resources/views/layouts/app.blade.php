@@ -18,15 +18,15 @@
     
     <style>
         @font-face {
-            font-family: 'Androgyne';
-            src: url('/fonts/Androgyne_TB.otf') format('opentype');
+            font-family: 'Mercurius';
+            src: url('/fonts/MercuriusMedium.ttf') format('truetype');
             font-weight: normal;
             font-style: normal;
             font-display: swap;
         }
 
-        .font-androgyne {
-            font-family: 'Androgyne', sans-serif;
+        .font-mercurius {
+            font-family: 'Mercurius', sans-serif;
         }
 
         /* Colores personalizados */
@@ -83,7 +83,7 @@
                 <div class="flex items-center min-w-0">
                     <div class="flex-shrink-0 flex items-center">
                         <img src="/logoZarza.webp" alt="La Zarza Contigo" class="h-10 w-auto mr-2">
-                        <h1 class="text-white text-lg font-bold whitespace-nowrap font-androgyne">La Zarza Contigo</h1>
+                        <h1 class="text-white text-lg font-bold whitespace-nowrap font-mercurius">La Zarza Contigo</h1>
                     </div>
                     <div class="hidden md:ml-6 md:flex md:items-center md:space-x-1">
                         <a href="{{ route('dashboard') }}" class="text-white hover:text-pink-200 px-3 py-2 rounded-md text-sm font-medium transition-colors">
@@ -91,17 +91,16 @@
                         </a>
                         @if(Session::get('user_rol') !== 'admin')
                         <a href="https://lazarza.com.mx/productos?category=PASTELES" target="_blank" class="text-white hover:text-pink-200 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                            <i class="fas fa-book mr-1"></i> Catálogo
+                            <i class="fas fa-book mr-1"></i> Catálogo de Productos
                         </a>
                         <a href="https://momentoslazarza.com/pasteles-eventos/" target="_blank" rel="noopener noreferrer" class="text-white hover:text-pink-200 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                            <i class="fas fa-birthday-cake mr-1"></i> Eventos
-                        </a>
+                            <i class="fas fa-birthday-cake mr-1"></i> Pasteles para Eventos                        </a>
                         @endif
                         @if(Session::get('user_authenticated', false))
                             @if(Session::get('user_rol') !== 'admin')
                             
                             <a href="{{ route('coupons.index') }}" class="text-white hover:text-pink-200 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                                <i class="fas fa-ticket-alt mr-1"></i> Cupones
+                                <i class="fas fa-tags mr-1"></i> Promociones
                             </a>
                             @endif
                             @if(Session::get('user_rol') === 'admin')
@@ -111,10 +110,10 @@
                                         <i class="fas fa-chevron-down ml-1 text-xs"></i>
                                     </button>
                                     <div x-show="open" @click.away="open = false" x-transition class="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                                                        <a href="{{ route('admin.coupons.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            <i class="fas fa-ticket-alt mr-2"></i> Gestión Cupones
+                                                        <a href="{{ route('admin.promos-oppen.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            <i class="fas fa-tags mr-2"></i> Gestión Promociones
                                         </a>
-                                        <a href="{{ route('admin.clients.create') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <a href="{{ route('admin.clientes.registrar') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                             <i class="fas fa-user-plus mr-2"></i> Registrar Cliente
                                         </a>
                                     </div>
@@ -145,7 +144,7 @@
                                 @if(Session::get('user_rol') !== 'admin')
                                 
                                 <a href="{{ route('coupons.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <i class="fas fa-ticket-alt mr-2"></i> Mis Cupones
+                                    <i class="fas fa-tags mr-2"></i> Promociones
                                 </a>
                                 @endif
                                 <div class="border-t border-gray-100"></div>
@@ -186,7 +185,7 @@
                 </a>
                 @if(Session::get('user_rol') !== 'admin')
                 <a href="{{ route('catalog.index') }}" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
-                    <i class="fas fa-book w-5 mr-2"></i> Catálogo
+                    <i class="fas fa-book w-5 mr-2"></i> Catálogo de Productos
                 </a>
                 <a href="https://momentoslazarza.com/pasteles-eventos/" target="_blank" rel="noopener noreferrer" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
                     <i class="fas fa-birthday-cake w-5 mr-2"></i> Eventos
@@ -201,16 +200,16 @@
                         <i class="fas fa-shopping-cart w-5 mr-2"></i> Compras
                     </a>
                     <a href="{{ route('coupons.index') }}" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
-                        <i class="fas fa-ticket-alt w-5 mr-2"></i> Cupones
+                        <i class="fas fa-tags w-5 mr-2"></i> Promociones
                     </a>
                     @endif
                     @if(Session::get('user_rol') === 'admin')
                         <div class="border-t border-white border-opacity-20 pt-2 mt-2">
                             <p class="px-3 py-1 text-pink-200 text-xs font-semibold uppercase tracking-wide">Administración</p>
-                            <a href="{{ route('admin.coupons.index') }}" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
-                                <i class="fas fa-ticket-alt w-5 mr-2"></i> Gestión Cupones
+                            <a href="{{ route('admin.promos-oppen.index') }}" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
+                                <i class="fas fa-tags w-5 mr-2"></i> Gestión Promociones
                             </a>
-                            <a href="{{ route('admin.clients.create') }}" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
+                            <a href="{{ route('admin.clientes.registrar') }}" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
                                 <i class="fas fa-user-plus w-5 mr-2"></i> Registrar Cliente
                             </a>
                         </div>
@@ -313,15 +312,15 @@
                 <div>
                     <h3 class="text-lg font-semibold mb-4">
                         <img src="/logoZarza.webp" alt="La Zarza Contigo" class="h-8 w-auto inline-block mr-2">
-                        <h1 class="text-white text-lg font-bold whitespace-nowrap font-androgyne">La Zarza Contigo</h1>
+                        <h1 class="text-white text-lg font-bold whitespace-nowrap font-mercurius">La Zarza Contigo</h1>
                     </h3>
-                    <p class="text-gray-200">La Zarza Contigo: Celebramos tu preferencia con beneficios pensados especialmente para ti</p>
+                    <p class="text-gray-200"><span class="font-mercurius">La Zarza Contigo</span>: Celebramos tu preferencia con beneficios pensados especialmente para ti</p>
                 </div>
                 <div>
                     <h4 class="text-md font-semibold mb-4">Enlaces Rápidos</h4>
                     <ul class="space-y-2">
                         <li><a href="{{ route('dashboard') }}" class="text-gray-200 hover:text-pink-200 transition-colors">Inicio</a></li>
-                        <li><a href="{{ route('coupons.index') }}" class="text-gray-200 hover:text-pink-200 transition-colors">Cupones</a></li>
+                        <li><a href="{{ route('coupons.index') }}" class="text-gray-200 hover:text-pink-200 transition-colors">Promociones</a></li>
                         <li><a href="{{ route('branches.index') }}" class="text-gray-200 hover:text-pink-200 transition-colors">Sucursales</a></li>                        <li><a href="https://lazarza.com.mx/aviso-de-privacidad" target="_blank" rel="noopener noreferrer" class="text-gray-200 hover:text-pink-200 transition-colors">Aviso de Privacidad</a></li>                    </ul>
                 </div>
                 <div>
@@ -357,7 +356,7 @@
                 </div>
             </div>
             <div class="border-t border-purple-400 border-opacity-30 mt-8 pt-6 text-center text-gray-200">
-                <p>&copy; {{ date('Y') }} La Zarza Contigo. Todos los derechos reservados.</p>
+                <p>&copy; {{ date('Y') }} <span class="font-mercurius">La Zarza Contigo</span>. Todos los derechos reservados.</p>
             </div>
         </div>
     </footer>

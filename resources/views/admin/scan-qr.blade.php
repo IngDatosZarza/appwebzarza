@@ -154,12 +154,8 @@
 
         {{-- Acciones --}}
         <div class="px-6 py-4 bg-gray-50 flex gap-3">
-            <a href="{{ route('admin.coupons.assign', $usuario->id) }}"
-               class="flex-1 text-center py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold rounded-xl hover:opacity-90 transition">
-                <i class="fas fa-gift mr-1"></i> Asignar cupón
-            </a>
             <a href="{{ route('purchase.form') }}?usuario_id={{ $usuario->id }}"
-               class="flex-1 text-center py-2.5 bg-white border-2 border-purple-200 text-purple-700 text-sm font-semibold rounded-xl hover:bg-purple-50 transition">
+               class="flex-1 text-center py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold rounded-xl hover:opacity-90 transition">
                 <i class="fas fa-receipt mr-1"></i> Registrar compra
             </a>
         </div>

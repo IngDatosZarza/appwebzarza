@@ -24,8 +24,8 @@
     /* Glassy card */
     .glass-card {
         background: rgba(255, 255, 255, 0.12);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
+        backdrop-filter: blur(50px);
+        -webkit-backdrop-filter: blur(50px);
         border: 1px solid rgba(255, 255, 255, 0.25);
     }
 
@@ -245,13 +245,12 @@
                 {{-- Headline --}}
                 <h1 class="text-4xl sm:text-5xl font-extrabold text-white leading-tight tracking-tight">
                     Ser parte<br>
-                    <span style="background: linear-gradient(90deg,#f9a8d4,#e879f9); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
-                        tiene sus ventajas
-                    </span>
+                    tiene sus ventajas
+                    
                 </h1>
 
                 <p class="text-pink-100 text-base sm:text-lg mt-4 leading-relaxed">
-                    Únete al programa <strong class="text-white">La Zarza Contigo</strong> y accede a cupones y beneficios exclusivos en cada compra.
+                    Únete al programa <strong class="text-white font-mercurius">La Zarza Contigo</strong> y accede a cupones y beneficios exclusivos en cada compra.
                 </p>
 
                 {{-- CTA Buttons --}}
@@ -289,13 +288,13 @@
                         <h3 class="text-white font-semibold text-sm">Cupones Exclusivos</h3>
                         <p class="text-pink-200 text-xs mt-1 leading-relaxed">Accede a descuentos y promociones especiales para miembros.</p>
                     </div>
-                    <div class="benefit-card rounded-2xl p-4 text-center">
+                    <a href="https://lazarza.com.mx/sucursales" target="_blank" rel="noopener noreferrer" class="benefit-card rounded-2xl p-4 text-center block">
                         <div class="icon-circle w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-3">
                             <i class="fas fa-map-marker-alt text-white text-base"></i>
                         </div>
                         <h3 class="text-white font-semibold text-sm">Conoce Nuestras Sucursales</h3>
                         <p class="text-pink-200 text-xs mt-1 leading-relaxed">Descubre nuestras ubicaciones y disfruta de beneficios exclusivos en cada visita.</p>
-                    </div>
+                    </a>
                 </div>
 
                 <p class="text-pink-300 text-xs mt-6">

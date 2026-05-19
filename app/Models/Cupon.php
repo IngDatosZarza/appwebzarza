@@ -29,18 +29,40 @@ class Cupon extends Model
             'fecha_inicio' => 'date',
             'fecha_fin' => 'date',
             'puntos_requeridos' => 'integer',
+            'activo' => 'boolean',
         ];
     }
 
-    // Forzar cast de booleano para PostgreSQL (PDO envía 1/0 en lugar de true/false)
-    public function setActivoAttribute($value)
+    /**
+     * Override save para manejar booleanos en PostgreSQL correctamente.
+     */
+    public function save(array $options = [])
     {
-        $this->attributes['activo'] = $value ? 'true' : 'false';
-    }
+        // Si activo cambió, usar DB::statement para evitar problemas con boolean en PostgreSQL
+        if ($this->exists && $this->isDirty('activo')) {
+            $activoVal = $this->activo ? 'TRUE' : 'FALSE';
+            \Illuminate\Support\Facades\DB::statement(
+                "UPDATE cupones SET activo = {$activoVal}, updated_at = NOW() WHERE id = ?",
+                [$this->id]
+            );
+            // Quitar activo del dirty para que parent::save() no lo envíe de nuevo
+            $this->attributes['activo'] = $this->activo;
+            $this->syncOriginalAttribute('activo');
+        }
+        
+        // Si es nuevo registro, forzar boolean nativo
+        if (!$this->exists && isset($this->attributes['activo'])) {
+            $activoVal = filter_var($this->attributes['activo'], FILTER_VALIDATE_BOOLEAN);
+            unset($this->attributes['activo']);
+            $result = parent::save($options);
+            \Illuminate\Support\Facades\DB::statement(
+                "UPDATE cupones SET activo = " . ($activoVal ? 'TRUE' : 'FALSE') . " WHERE id = ?",
+                [$this->id]
+            );
+            return $result;
+        }
 
-    public function getActivoAttribute($value)
-    {
-        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+        return parent::save($options);
     }
 
     // Relaciones

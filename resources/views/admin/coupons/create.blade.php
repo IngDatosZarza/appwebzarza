@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'Crear Cupón - Admin')
 
@@ -15,7 +15,7 @@
                     <i class="fas fa-plus-circle text-purple-600 mr-3"></i>
                     Crear Nuevo Cupón
                 </h1>
-                <p class="text-gray-600 mt-2">Configura un nuevo cupón para el sistema La Zarza Contigo</p>
+                <p class="text-gray-600 mt-2">Configura un nuevo cupón para el sistema <span class="font-mercurius">La Zarza Contigo</span></p>
             </div>
         </div>
     </div>

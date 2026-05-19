@@ -2,8 +2,23 @@
 
 @section('title', 'Cupones Disponibles')
 
+@push('styles')
+<style>
+    body {
+        background: transparent !important;
+    }
+    main {
+        padding: 0 !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+    }
+</style>
+@endpush
+
 @section('content')
-<div class="space-y-6">
+<div class="min-h-screen bg-cover bg-center bg-fixed bg-no-repeat" style="background-image: url('/PROPORCIONAL FHD.jpg');">
+<div style="background: linear-gradient(135deg, rgba(113, 57, 141, 0.75) 0%, rgba(181, 26, 138, 0.65) 100%); min-height: 100vh;" class="py-8 px-4 sm:px-6 lg:px-8">
+<div class="max-w-7xl mx-auto space-y-6">
     <!-- Header -->
     <div class="bg-white rounded-lg shadow-sm p-6">
         <div class="flex items-center justify-between">
@@ -426,5 +441,7 @@
             </div>
         </div>
     </div>
+</div>
+</div>
 </div>
 @endsection

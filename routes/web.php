@@ -6,6 +6,14 @@ use App\Http\Controllers\Web\NotificationController;
 use App\Http\Controllers\Web\BranchesController;
 use App\Http\Controllers\Web\CatalogController;
 use App\Http\Controllers\Web\DireccionController;
+use App\Http\Controllers\Admin\AdminAuthController;
+use App\Http\Controllers\Admin\AdminCouponsController;
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminUsuariosController;
+use App\Http\Controllers\Admin\AdminSucursalController;
+use App\Http\Controllers\Admin\AdminClientesController;
+use App\Http\Controllers\Admin\AdminClienteRegistroController;
+use App\Http\Controllers\Admin\AdminPromosOppenController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 
@@ -43,7 +51,7 @@ Route::get('/test-profile', function () {
 });
 
 // Rutas públicas
-Route::get('/cupones', [DashboardController::class, 'coupons'])->name('coupons.index');
+// (Cupones/Promociones se manejan más abajo con CouponsController)
 
 // Rutas que requieren autenticación
 Route::middleware('custom.auth')->group(function () {
@@ -56,11 +64,11 @@ Route::middleware('custom.auth')->group(function () {
     Route::get('/api/direccion/principal', [DireccionController::class, 'getDireccionPrincipal'])->name('direccion.principal');
     Route::put('/perfil/direccion', [DireccionController::class, 'updateDireccionPrincipal'])->name('direccion.update');
     
-    // Cupones del usuario
-    Route::get('/mis-cupones', [DashboardController::class, 'myCoupons'])->name('coupons.my');
-    Route::post('/cupones/canjear', [DashboardController::class, 'redeemCoupon'])->name('coupons.redeem');
-    Route::post('/cupones/obtener', [DashboardController::class, 'assignCouponWithGamification'])->name('coupons.assign');
-    Route::post('/cupones/verificar-desbloqueos', [DashboardController::class, 'unlockMyBlockedCoupons'])->name('coupons.unlock');
+    // Cupones del usuario (legacy - desactivado, ahora son promos Oppen)
+    // Route::get('/mis-cupones', [DashboardController::class, 'myCoupons'])->name('coupons.my');
+    // Route::post('/cupones/canjear', [DashboardController::class, 'redeemCoupon'])->name('coupons.redeem');
+    // Route::post('/cupones/obtener', [DashboardController::class, 'assignCouponWithGamification'])->name('coupons.assign');
+    // Route::post('/cupones/verificar-desbloqueos', [DashboardController::class, 'unlockMyBlockedCoupons'])->name('coupons.unlock');
     
     // Compras
     Route::get('/compras', [DashboardController::class, 'purchases'])->name('purchases.index');
@@ -90,31 +98,18 @@ Route::middleware('custom.auth')->group(function () {
     Route::get('/tickets/check-ticket', [\App\Http\Controllers\Web\TicketController::class, 'checkTicket'])->name('tickets.check');
 });
 
-// Rutas de cupones para clientes
+// Rutas de promociones para clientes (antes cupones)
 Route::get('/cupones', [\App\Http\Controllers\Web\CouponsController::class, 'myCoupons'])->name('coupons.index');
-Route::post('/cupones/{id}/canjear', [\App\Http\Controllers\Web\CouponsController::class, 'redeem'])->name('coupons.redeem');
-Route::get('/cupones/{id}', [\App\Http\Controllers\Web\CouponsController::class, 'show'])->name('coupons.show');
+// Rutas legacy de canje desactivadas (ahora promos se aplican en POS via Oppen)
+// Route::post('/cupones/{id}/canjear', [\App\Http\Controllers\Web\CouponsController::class, 'redeem'])->name('coupons.redeem');
+// Route::get('/cupones/{id}', [\App\Http\Controllers\Web\CouponsController::class, 'show'])->name('coupons.show');
 
-// Rutas de administración de cupones (requieren autenticación)
-Route::middleware(['custom.auth', 'admin'])->prefix('admin')->group(function () {
-    Route::get('/cupones', [\App\Http\Controllers\Web\CouponsController::class, 'index'])->name('admin.coupons.index');
-    Route::get('/cupones/crear', [\App\Http\Controllers\Web\CouponsController::class, 'create'])->name('admin.coupons.create');
-    Route::post('/cupones', [\App\Http\Controllers\Web\CouponsController::class, 'store'])->name('admin.coupons.store');
-    Route::get('/cupones/{id}/editar', [\App\Http\Controllers\Web\CouponsController::class, 'edit'])->name('admin.coupons.edit');
-    Route::put('/cupones/{id}', [\App\Http\Controllers\Web\CouponsController::class, 'update'])->name('admin.coupons.update');
-    Route::delete('/cupones/{id}', [\App\Http\Controllers\Web\CouponsController::class, 'destroy'])->name('admin.coupons.destroy');
-    Route::post('/cupones/{id}/asignar', [\App\Http\Controllers\Web\CouponsController::class, 'assign'])->name('admin.coupons.assign');
-    Route::get('/cupones/{id}/asignaciones', [\App\Http\Controllers\Web\CouponsController::class, 'getAssignments'])->name('admin.coupons.assignments');
-    
-    // Rutas de validación de cupones QR
-    Route::get('/validar-cupones', [\App\Http\Controllers\Web\CouponValidationController::class, 'showValidationForm'])->name('admin.coupons.validate');
-    Route::post('/cupones/validar', [\App\Http\Controllers\Web\CouponValidationController::class, 'validateCoupon'])->name('admin.coupons.validate.check');
-    Route::post('/cupones/marcar-usado', [\App\Http\Controllers\Web\CouponValidationController::class, 'markAsUsed'])->name('admin.coupons.mark-used');
-    
-    // Rutas de gestión de clientes
-    Route::get('/clientes/registrar', [\App\Http\Controllers\Web\AuthController::class, 'showAdminClientRegister'])->name('admin.clients.create');
-    Route::post('/clientes/registrar', [\App\Http\Controllers\Web\AuthController::class, 'adminRegisterClient'])->name('admin.clients.store');
-});
+// Rutas de administración de cupones LEGACY (desactivado - ahora se usan Promociones Oppen)
+// Route::middleware(['custom.auth', 'admin'])->prefix('admin-legacy')->group(function () {
+//     Route::get('/cupones', [\App\Http\Controllers\Web\CouponsController::class, 'index'])->name('legacy.admin.coupons.index');
+//     Route::get('/clientes/registrar', [\App\Http\Controllers\Web\AuthController::class, 'showAdminClientRegister'])->name('legacy.admin.clients.create');
+//     Route::post('/clientes/registrar', [\App\Http\Controllers\Web\AuthController::class, 'adminRegisterClient'])->name('legacy.admin.clients.store');
+// });
 
 // Rutas de código QR - cupones y usuario
 Route::get('/qr/cupon/{codigo_qr}', [\App\Http\Controllers\Web\QrCodeController::class, 'generateCouponQr'])->name('qr.coupon');
@@ -125,8 +120,8 @@ Route::middleware('custom.auth')->group(function () {
     Route::get('/mi-tarjeta', [\App\Http\Controllers\Web\DashboardController::class, 'miTarjeta'])->name('client.mi-tarjeta');
 });
 
-// Escaneo de QR de cliente en sucursal (requiere admin)
-Route::middleware(['custom.auth', 'admin'])->prefix('admin')->group(function () {
+// Escaneo de QR de cliente en sucursal (legacy - requiere admin session)
+Route::middleware(['custom.auth', 'admin'])->prefix('admin-legacy')->group(function () {
     Route::get('/escanear-cliente', [\App\Http\Controllers\Web\QrCodeController::class, 'scanUserQr'])->name('admin.qr.scan');
 });
 
@@ -135,4 +130,63 @@ Route::get('/notifications', [NotificationController::class, 'index'])->name('no
 Route::get('/notifications/api', [NotificationController::class, 'getNotifications'])->name('notifications.api');
 Route::post('/notifications/mark-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
 Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+
+// ====================================================================
+// NUEVO PANEL DE ADMINISTRACIÓN (tabla separada 'administradores')
+// ====================================================================
+
+// Auth admin (login/logout separado del login de clientes)
+Route::get('/admin/login', [AdminAuthController::class, 'showLogin'])->name('admin.login');
+Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.login.post');
+
+// Rutas protegidas del panel admin (guard 'admin')
+Route::middleware('admin.auth')->prefix('admin')->group(function () {
+
+    Route::post('/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
+
+    // Dashboard (redirige según rol)
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+
+    // Registro de clientes (accesible por superadmin y admin_sucursal)
+    Route::get('/clientes/registrar', [AdminClienteRegistroController::class, 'showForm'])->name('admin.clientes.registrar');
+    Route::post('/clientes/registrar', [AdminClienteRegistroController::class, 'store'])->name('admin.clientes.registrar.store');
+
+    // Cupones legacy (desactivado - ahora se usan Promociones Oppen)
+    // Route::get('/cupones', [AdminCouponsController::class, 'index'])->name('admin.coupons.index');
+    // Route::get('/cupones/crear', [AdminCouponsController::class, 'create'])->name('admin.coupons.create');
+    // Route::post('/cupones', [AdminCouponsController::class, 'store'])->name('admin.coupons.store');
+    // Route::get('/cupones/{id}/editar', [AdminCouponsController::class, 'edit'])->name('admin.coupons.edit');
+    // Route::put('/cupones/{id}', [AdminCouponsController::class, 'update'])->name('admin.coupons.update');
+    // Route::delete('/cupones/{id}', [AdminCouponsController::class, 'destroy'])->name('admin.coupons.destroy');
+    // Route::post('/cupones/{id}/asignar', [AdminCouponsController::class, 'assign'])->name('admin.coupons.assign');
+    // Route::get('/cupones/{id}/asignaciones', [AdminCouponsController::class, 'getAssignments'])->name('admin.coupons.assignments');
+    // Route::get('/validar-cupones', [AdminCouponsController::class, 'showValidationForm'])->name('admin.coupons.validate');
+    // Route::post('/cupones/validar', [AdminCouponsController::class, 'validateCoupon'])->name('admin.coupons.validate.check');
+    // Route::post('/cupones/marcar-usado', [AdminCouponsController::class, 'markAsUsed'])->name('admin.coupons.mark-used');
+
+    // Promociones Oppen (sincronización API)
+    Route::get('/promociones-oppen', [AdminPromosOppenController::class, 'index'])->name('admin.promos-oppen.index');
+    Route::get('/promociones-oppen/{id}', [AdminPromosOppenController::class, 'show'])->name('admin.promos-oppen.show');
+    Route::post('/promociones-oppen/sync', [AdminPromosOppenController::class, 'sync'])->name('admin.promos-oppen.sync');
+
+    // --- Rutas exclusivas de Admin Sucursal ---
+    Route::middleware('admin.sucursal')->group(function () {
+        Route::get('/mi-sucursal/clientes', [AdminSucursalController::class, 'misClientes'])->name('admin.mi-sucursal.clientes');
+    });
+
+    // --- Rutas exclusivas de Superadmin ---
+    Route::middleware('superadmin')->group(function () {
+        // CRUD Administradores de sucursal
+        Route::get('/administradores', [AdminUsuariosController::class, 'index'])->name('admin.usuarios.index');
+        Route::get('/administradores/crear', [AdminUsuariosController::class, 'create'])->name('admin.usuarios.create');
+        Route::post('/administradores', [AdminUsuariosController::class, 'store'])->name('admin.usuarios.store');
+        Route::get('/administradores/{id}/editar', [AdminUsuariosController::class, 'edit'])->name('admin.usuarios.edit');
+        Route::put('/administradores/{id}', [AdminUsuariosController::class, 'update'])->name('admin.usuarios.update');
+        Route::patch('/administradores/{id}/toggle', [AdminUsuariosController::class, 'toggleActive'])->name('admin.usuarios.toggle');
+        Route::patch('/administradores/{id}/reset-password', [AdminUsuariosController::class, 'resetPassword'])->name('admin.usuarios.reset-password');
+
+        // Ver todos los clientes
+        Route::get('/clientes', [AdminClientesController::class, 'index'])->name('admin.clientes.index');
+    });
+});
 

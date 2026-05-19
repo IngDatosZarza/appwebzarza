@@ -31,13 +31,7 @@
                     <h1 class="text-3xl font-bold mb-2">{{ $cupon['nombre'] }}</h1>
                     <p class="text-purple-100 text-lg">{{ $cupon['descripcion'] }}</p>
                 </div>
-                <div class="bg-white bg-opacity-20 rounded-lg p-4 inline-block">
-                    <div class="text-sm text-purple-200 mb-1">Valor del cupón</div>
-                    <div class="text-2xl font-bold">
-                        <i class="fas fa-coins mr-2"></i>
-                        {{ number_format($cupon['puntos_requeridos']) }} puntos
-                    </div>
-                </div>
+
             </div>
 
             <!-- Contenido del cupón -->
@@ -135,10 +129,7 @@
                             <span class="text-gray-500">Fecha de canje:</span>
                             <div class="font-medium text-gray-900">{{ date('d/m/Y H:i', strtotime($cupon['created_at'])) }}</div>
                         </div>
-                        <div>
-                            <span class="text-gray-500">Puntos utilizados:</span>
-                            <div class="font-medium text-gray-900">{{ number_format($cupon['puntos_requeridos']) }} puntos</div>
-                        </div>
+
                         @if($cupon['estado'] === 'usado' && isset($cupon['fecha_uso']))
                         <div>
                             <span class="text-gray-500">Fecha de uso:</span>
@@ -155,7 +146,7 @@
                         Términos y condiciones
                     </h4>
                     <ul class="text-sm text-blue-700 space-y-1">
-                        <li>• Este cupón es válido únicamente en sucursales La Zarza Contigo</li>
+                        <li>• Este cupón es válido únicamente en sucursales <span class="font-mercurius">La Zarza Contigo</span></li>
                         <li>• El cupón debe ser presentado antes de realizar el pago</li>
                         <li>• No es acumulable con otras promociones</li>
                         <li>• El cupón es personal e intransferible</li>

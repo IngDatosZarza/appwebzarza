@@ -36,6 +36,15 @@ class Usuario extends Authenticatable
         'club_zarza',
         'oppen_customer_id',
         'qr_codigo',
+        // Campos de tracking de registro
+        'origen_registro',
+        'dispositivo_registro',
+        'registrado_por_admin_id',
+        'registrado_por_administrador_id',
+        'sucursal_registro_id',
+        'campana_id',
+        'user_agent',
+        'ip_registro',
     ];
 
     protected static function boot(): void
@@ -110,6 +119,16 @@ class Usuario extends Authenticatable
     public function auditorias()
     {
         return $this->hasMany(Auditoria::class);
+    }
+
+    public function registradoPorAdministrador()
+    {
+        return $this->belongsTo(Administrador::class, 'registrado_por_administrador_id');
+    }
+
+    public function sucursalRegistro()
+    {
+        return $this->belongsTo(Sucursal::class, 'sucursal_registro_id');
     }
 
     // Scopes

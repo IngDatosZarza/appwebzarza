@@ -29,6 +29,14 @@ if ($helperPath && file_exists($helperPath)) {
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     
     <style>
+        @font-face {
+            font-family: 'Mercurius';
+            src: url('/fonts/MercuriusMedium.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+        .font-mercurius { font-family: 'Mercurius', sans-serif; }
         .zarza-gradient { background: linear-gradient(135deg, #b51a8a 0%, #71398d 100%); }
         .zarza-gradient-reverse { background: linear-gradient(135deg, #71398d 0%, #b51a8a 100%); }
         .form-input:focus { border-color: #b51a8a; box-shadow: 0 0 0 3px rgba(181, 26, 138, 0.1); }
@@ -50,7 +58,7 @@ if ($helperPath && file_exists($helperPath)) {
                     Iniciar Sesión
                 </h2>
                 <p class="mt-2 text-sm text-pink-100">
-                    Accede a tu cuenta de La Zarza Contigo
+                    Accede a tu cuenta de <span class="font-mercurius">La Zarza Contigo</span>
                 </p>
             </div>
         </div>

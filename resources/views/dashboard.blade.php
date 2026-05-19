@@ -79,8 +79,8 @@
                     </div>
                 </div>
                 <div class="mt-4">
-                    <a href="{{ route('coupons.my') }}" class="text-purple-100 hover:text-white text-sm font-medium">
-                        Mis cupones <i class="fas fa-arrow-right ml-1"></i>
+                    <a href="{{ route('coupons.index') }}" class="text-purple-100 hover:text-white text-sm font-medium">
+                        Promociones <i class="fas fa-arrow-right ml-1"></i>
                     </a>
                 </div>
             </div>

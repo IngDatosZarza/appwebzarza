@@ -159,6 +159,14 @@ if (isset($errors) && $errors->any()) {
     </script>
     
     <style>
+        @font-face {
+            font-family: 'Mercurius';
+            src: url('/fonts/MercuriusMedium.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+        .font-mercurius { font-family: 'Mercurius', sans-serif; }
         .zarza-gradient { background: linear-gradient(135deg, #b51a8a 0%, #71398d 100%); }
         .zarza-gradient-reverse { background: linear-gradient(135deg, #71398d 0%, #b51a8a 100%); }
         .form-input:focus { border-color: #b51a8a; box-shadow: 0 0 0 3px rgba(181, 26, 138, 0.1); }
@@ -181,7 +189,7 @@ if (isset($errors) && $errors->any()) {
                     Crear Cuenta
                 </h2>
                 <p class="mt-2 text-sm text-pink-100">
-                    Únete a La Zarza Contigo y comienza a ganar puntos
+                    Únete a <span class="font-mercurius">La Zarza Contigo</span> y comienza a ganar puntos
                 </p>
             </div>
         </div>
@@ -650,7 +658,7 @@ if (isset($errors) && $errors->any()) {
         <div class="bg-white bg-opacity-20 rounded-lg p-6 text-white">
             <h3 class="font-semibold mb-4 text-center">
                 <i class="fas fa-gift mr-2"></i>
-                ¿Por qué unirse a La Zarza Contigo?
+                ¿Por qué unirse a <span class="font-mercurius">La Zarza Contigo</span>?
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                 <div class="text-center">

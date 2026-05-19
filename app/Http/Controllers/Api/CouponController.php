@@ -131,6 +131,7 @@ class CouponController extends Controller
                 'cupon_id' => $cupon->id,
                 'codigo_qr' => 'QR_' . strtoupper(uniqid()),
                 'estado' => 'asignado',
+            ]);
 
             // Registrar en auditoría
             DB::table('auditoria')->insert([

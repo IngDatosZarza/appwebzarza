@@ -396,59 +396,20 @@ class CouponsController
     // ========== ÁREA DE CLIENTES ==========
 
     /**
-     * Lista de cupones disponibles para clientes
+     * Mostrar promociones vigentes de Oppen al cliente.
      */
     public function myCoupons()
     {
-        $user = $this->authService->getCurrentUser();
-        if (!$user) {
-            return redirect('/login')->with('error', 'Debes iniciar sesión');
-        }
-
         try {
-            // Obtener cupones disponibles con verificación de si ya fueron canjeados
-            $cupones_disponibles = Cupon::select(
-                    'cupones.*',
-                    DB::raw('CASE WHEN cupones_asignados.id IS NOT NULL THEN true ELSE false END as ya_canjeado')
-                )
-                ->leftJoin('cupones_asignados', function($join) use ($user) {
-                    $join->on('cupones.id', '=', 'cupones_asignados.cupon_id')
-                         ->where('cupones_asignados.usuario_id', '=', $user->id);
-                })
-                ->whereRaw('"cupones"."activo" = true')
-                ->whereDate('cupones.fecha_inicio', '<=', DB::raw('CURRENT_DATE'))
-                ->whereDate('cupones.fecha_fin', '>=', DB::raw('CURRENT_DATE'))
-                ->orderBy('cupones.nombre', 'ASC')
-                ->get()
-                ->toArray();
+            $promociones = \App\Models\PromocionOppen::activasHoy()
+                ->orderBy('nombre', 'ASC')
+                ->get();
 
-            // Obtener cupones del usuario
-            $mis_cupones = CuponAsignado::select(
-                    'cupones_asignados.*',
-                    'cupones.nombre',
-                    'cupones.codigo',
-                    'cupones.descripcion',
-                    'cupones.puntos_requeridos',
-                    DB::raw("
-                        CASE 
-                            WHEN cupones_asignados.estado = 'asignado' THEN 'disponible'
-                            WHEN cupones_asignados.estado = 'usado' THEN 'usado'
-                            WHEN cupones_asignados.estado = 'bloqueado' THEN 'bloqueado'
-                            WHEN cupones_asignados.estado = 'vencido' THEN 'vencido'
-                            ELSE 'otro'
-                        END as estado_display
-                    ")
-                )
-                ->join('cupones', 'cupones_asignados.cupon_id', '=', 'cupones.id')
-                ->where('cupones_asignados.usuario_id', $user->id)
-                ->orderBy('cupones_asignados.created_at', 'DESC')
-                ->get()
-                ->toArray();
-
-            return view('client.coupons.index', compact('cupones_disponibles', 'mis_cupones'));
+            return view('client.coupons.index', compact('promociones'));
 
         } catch (Exception $e) {
-            return back()->with('error', 'Error al cargar cupones: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Error al cargar promociones', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return back()->with('error', 'Error al cargar promociones: ' . $e->getMessage());
         }
     }
 

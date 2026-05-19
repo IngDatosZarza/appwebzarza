@@ -4,8 +4,25 @@
 
 @push('styles')
 <style>
+    body {
+        background: transparent !important;
+    }
+    main {
+        padding: 0 !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+    }
+    .hero-overlay {
+        background: linear-gradient(135deg,
+            rgba(113, 57, 141, 0.75) 0%,
+            rgba(181, 26, 138, 0.65) 50%,
+            rgba(0, 0, 0, 0.55) 100%);
+    }
     .qr-card {
-        background: linear-gradient(135deg, #71398d 0%, #b51a8a 100%);
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.25);
     }
     .qr-code-container {
         background: #ffffff;
@@ -34,7 +51,9 @@
 @endpush
 
 @section('content')
-<div class="max-w-xl mx-auto px-4 py-8">
+<div class="min-h-screen bg-cover bg-center bg-fixed bg-no-repeat" style="background-image: url('/PROPORCIONAL FHD.jpg');">
+<div class="min-h-screen hero-overlay py-8 px-4 sm:px-6 lg:px-8">
+<div class="max-w-xl mx-auto">
 
     {{-- Tarjeta QR --}}
     <div class="qr-card rounded-2xl text-white shadow-xl overflow-hidden">
@@ -42,7 +61,7 @@
         {{-- Encabezado --}}
         <div class="px-6 pt-6 pb-4 flex items-center justify-between">
             <div>
-                <p class="text-sm text-white/70 uppercase tracking-wider font-semibold">La Zarza Contigo</p>
+                <p class="text-sm text-white/70 uppercase tracking-wider font-semibold font-mercurius">La Zarza Contigo</p>
                 <h1 class="text-2xl font-bold mt-1">
                     {{ $usuario->nombres }} {{ $usuario->apellido_paterno }}
                 </h1>
@@ -85,7 +104,7 @@
                 <span class="text-sm font-medium text-white">{{ $usuario->telefono }}</span>
             </div>
             <div class="flex justify-between items-center">
-                <span class="text-white/60 text-sm"><i class="fas fa-tag mr-2"></i>Cupones disponibles</span>
+                <span class="text-white/60 text-sm"><i class="fas fa-tags mr-2"></i>Promociones activas</span>
                 <span class="text-sm font-bold text-white bg-white/20 rounded-full px-3 py-0.5">
                     {{ $cuponesDisponibles }}
                 </span>
@@ -104,14 +123,14 @@
     </div>
 
     {{-- Instrucciones --}}
-    <div class="mt-6 bg-purple-50 border border-purple-100 rounded-xl p-5 space-y-3">
-        <h3 class="font-semibold text-purple-800 flex items-center gap-2">
+    <div class="mt-6 rounded-xl p-5 space-y-3" style="background: rgba(255,255,255,0.10); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);">
+        <h3 class="font-semibold text-white flex items-center gap-2">
             <i class="fas fa-info-circle"></i> ¿Cómo usar mi QR?
         </h3>
-        <ol class="list-decimal list-inside text-purple-700 text-sm space-y-1.5 leading-relaxed">
+        <ol class="list-decimal list-inside text-pink-100 text-sm space-y-1.5 leading-relaxed">
             <li>Muestra la pantalla de tu celular al personal de la sucursal.</li>
-            <li>Ellos escaneará el código para identificar tu cuenta.</li>
-            <li>Podrás recibir cupones y registrar tus compras.</li>
+            <li>Ellos escanearán el código para identificar tu cuenta.</li>
+            <li>Se aplicarán las promociones vigentes a tu compra.</li>
             <li>También puedes imprimir esta tarjeta para llevarla contigo.</li>
         </ol>
     </div>
@@ -119,14 +138,16 @@
     {{-- Acciones rápidas --}}
     <div class="mt-4 grid grid-cols-2 gap-3">
         <a href="{{ route('tickets.create') }}"
-           class="flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl py-3 text-sm shadow hover:shadow-md transition">
+           class="flex items-center justify-center gap-2 bg-white/20 hover:bg-white/30 text-white font-semibold rounded-xl py-3 text-sm shadow hover:shadow-md transition border border-white/20">
             <i class="fas fa-receipt"></i> Registrar ticket
         </a>
-        <a href="{{ route('coupons.my') }}"
-           class="flex items-center justify-center gap-2 bg-white border-2 border-purple-200 text-purple-700 font-semibold rounded-xl py-3 text-sm shadow hover:shadow-md transition">
-            <i class="fas fa-ticket-alt"></i> Mis cupones
+        <a href="{{ route('coupons.index') }}"
+           class="flex items-center justify-center gap-2 bg-white/20 hover:bg-white/30 text-white font-semibold rounded-xl py-3 text-sm shadow hover:shadow-md transition border border-white/20">
+            <i class="fas fa-tags"></i> Promociones
         </a>
     </div>
 
+</div>
+</div>
 </div>
 @endsection
