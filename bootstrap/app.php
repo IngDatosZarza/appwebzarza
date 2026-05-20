@@ -24,7 +24,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.auth' => \App\Http\Middleware\AdminAuthMiddleware::class,
             'superadmin' => \App\Http\Middleware\SuperadminMiddleware::class,
             'admin.sucursal' => \App\Http\Middleware\AdminSucursalMiddleware::class,
+            'qa.access' => \App\Http\Middleware\QaAccessMiddleware::class,
         ]);
+
+        // Aplicar QA Access globalmente en web (solo activo cuando QA_ACCESS_PASSWORD esté definido)
+        $middleware->prependToGroup('web', \App\Http\Middleware\QaAccessMiddleware::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

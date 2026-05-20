@@ -3,6 +3,8 @@
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\TransactionController;
 use App\Http\Controllers\Web\NotificationController;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 use App\Http\Controllers\Web\BranchesController;
 use App\Http\Controllers\Web\CatalogController;
 use App\Http\Controllers\Web\DireccionController;
@@ -188,5 +190,32 @@ Route::middleware('admin.auth')->prefix('admin')->group(function () {
         // Ver todos los clientes
         Route::get('/clientes', [AdminClientesController::class, 'index'])->name('admin.clientes.index');
     });
+});
+
+// ====================================================================
+// RUTAS DE ACCESO QA (sin middleware de QA para evitar loop)
+// ====================================================================
+Route::withoutMiddleware(\App\Http\Middleware\QaAccessMiddleware::class)->group(function () {
+
+    Route::post('/qa-access/verify', function (\Illuminate\Http\Request $request) {
+        $qaPassword = env('QA_ACCESS_PASSWORD');
+
+        if (empty($qaPassword)) {
+            return redirect('/');
+        }
+
+        if ($request->input('password') === $qaPassword) {
+            $request->session()->put('qa_access_granted', true);
+            return redirect($request->input('redirect', '/'));
+        }
+
+        return back()->with('error', 'Contraseña incorrecta');
+    })->name('qa.access.verify');
+
+    Route::get('/qa-access/logout', function (\Illuminate\Http\Request $request) {
+        $request->session()->forget('qa_access_granted');
+        return redirect('/');
+    })->name('qa.access.logout');
+
 });
 
