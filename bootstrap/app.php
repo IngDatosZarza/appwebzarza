@@ -28,7 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // Aplicar QA Access globalmente en web (solo activo cuando QA_ACCESS_PASSWORD esté definido)
-        $middleware->prependToGroup('web', \App\Http\Middleware\QaAccessMiddleware::class);
+        $middleware->appendToGroup('web', \App\Http\Middleware\QaAccessMiddleware::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
