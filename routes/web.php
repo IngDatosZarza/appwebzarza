@@ -16,7 +16,6 @@ use App\Http\Controllers\Admin\AdminSucursalController;
 use App\Http\Controllers\Admin\AdminClientesController;
 use App\Http\Controllers\Admin\AdminClienteRegistroController;
 use App\Http\Controllers\Admin\AdminPromosOppenController;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 
 /*
