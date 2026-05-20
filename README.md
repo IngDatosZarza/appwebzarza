@@ -49,6 +49,8 @@ Sistema completo de gestión de puntos de fidelidad desarrollado en Laravel que 
 
 ## Instalación
 
+### Desarrollo Local
+
 ### Requisitos
 - PHP 8.2 o superior
 - Composer
@@ -177,6 +179,68 @@ El archivo `database/queries.sql` contiene consultas predefinidas para:
 - Reportes de ventas por sucursal
 - Sistema de auditoría
 - Cupones disponibles por usuario
+
+## 🚀 Deployment a Producción
+
+### Deployment a VPS con CyberPanel (Hostinger - AlmaLinux 9)
+
+⭐ **TU CASO:** Servidor con CyberPanel + OpenLiteSpeed
+
+Para desplegar esta aplicación en un VPS con CyberPanel:
+
+📋 **[DEPLOYMENT_CYBERPANEL.md](DEPLOYMENT_CYBERPANEL.md)** ⭐ - **Guía específica para CyberPanel**  
+📝 **[START_HERE.md](START_HERE.md)** - Guía rápida simplificada (~60 min)
+
+#### Para servidores tradicionales (sin CyberPanel)
+
+📋 **[DEPLOYMENT.md](DEPLOYMENT.md)** - Guía completa con Nginx/Apache  
+📝 **[DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)** - Checklist detallado
+
+#### Archivos de Configuración Incluidos
+
+**Para CyberPanel:**
+- **deploy-cyberpanel.sh** ⭐ - Script automatizado para OpenLiteSpeed
+- **.env.production.example** - Variables de entorno
+
+**Para servidores tradicionales:**
+- **deploy.sh** - Script para Nginx/Apache
+- **nginx.conf** - Configuración Nginx
+- **apache.conf** - Configuración Apache  
+- **server-commands.sh** - Comandos útiles
+
+#### Deployment Rápido con CyberPanel
+
+```bash
+# 1. Primera vez: Seguir DEPLOYMENT_CYBERPANEL.md (~60 min)
+
+# 2. Actualizaciones futuras (1-2 min):
+ssh root@ip-del-servidor
+bash ~/deploy-appwebzarza.sh
+```
+
+#### Características del Deployment con CyberPanel
+
+✅ Interface web para gestión  
+✅ OpenLiteSpeed (más rápido que Apache/Nginx)  
+✅ SSL Let's Encrypt con 1-click  
+✅ HTTP/3 soportado nativamente  
+✅ Modo mantenimiento automático  
+✅ Pull desde Git automático  
+✅ Instalación de dependencias  
+✅ Migraciones automáticas  
+✅ Optimización de caché  
+✅ Verificación de salud  
+
+#### Requisitos del Servidor
+
+- AlmaLinux 9 (o similar RHEL-based)
+- **CyberPanel instalado** (incluye todo lo siguiente):
+  - OpenLiteSpeed
+  - PHP 8.2+
+  - Composer
+  - Git
+  - Node.js & NPM
+- MySQL/MariaDB (remoto o local)
 
 ## Contribución
 1. Fork el proyecto
