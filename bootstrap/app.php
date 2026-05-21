@@ -31,5 +31,16 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', \App\Http\Middleware\QaAccessMiddleware::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response, \Throwable $e, \Illuminate\Http\Request $request) {
+            $status = $response->getStatusCode();
+
+            // En producción, mostrar páginas de error personalizadas para errores HTTP comunes
+            if (!app()->hasDebugModeEnabled() && in_array($status, [403, 404, 405, 419, 429, 500, 503])) {
+                if (view()->exists("errors.{$status}")) {
+                    return response()->view("errors.{$status}", [], $status);
+                }
+            }
+
+            return $response;
+        });
     })->create();

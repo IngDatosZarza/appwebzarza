@@ -321,7 +321,7 @@
                     <ul class="space-y-2">
                         <li><a href="{{ route('dashboard') }}" class="text-gray-200 hover:text-pink-200 transition-colors">Inicio</a></li>
                         <li><a href="{{ route('coupons.index') }}" class="text-gray-200 hover:text-pink-200 transition-colors">Promociones</a></li>
-                        <li><a href="{{ route('branches.index') }}" class="text-gray-200 hover:text-pink-200 transition-colors">Sucursales</a></li>                        <li><a href="https://lazarza.com.mx/aviso-de-privacidad" target="_blank" rel="noopener noreferrer" class="text-gray-200 hover:text-pink-200 transition-colors">Aviso de Privacidad</a></li>                    </ul>
+                        <li><a href="https://lazarza.com.mx/sucursales" class="text-gray-200 hover:text-pink-200 transition-colors">Sucursales</a></li>                        <li><a href="https://lazarza.com.mx/aviso-de-privacidad" target="_blank" rel="noopener noreferrer" class="text-gray-200 hover:text-pink-200 transition-colors">Aviso de Privacidad</a></li>                    </ul>
                 </div>
                 <div>
                     <h4 class="text-md font-semibold mb-4">Contacto</h4>

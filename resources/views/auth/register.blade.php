@@ -678,7 +678,7 @@ if (isset($errors) && $errors->any()) {
 
         <!-- Back to Home -->
         <div class="text-center">
-            <a href="/" class="inline-flex items-center text-white hover:text-pink-200 transition-colors">
+            <a href="/" class="inline-flex items-center text-white hover:text-pink-200 transition-colors  text-lg">
                 <i class="fas fa-arrow-left mr-2"></i>
                 Volver al Inicio
             </a>

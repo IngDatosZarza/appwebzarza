@@ -136,7 +136,7 @@ if ($helperPath && file_exists($helperPath)) {
                         </label>
                     </div>
                     <div class="text-sm">
-                        <a href="#" class="font-medium zarza-text hover:text-pink-600">
+                        <a href="/olvide-contrasena" class="font-medium zarza-text hover:text-pink-600">
                             ¿Olvidaste tu contraseña?
                         </a>
                     </div>
@@ -167,21 +167,11 @@ if ($helperPath && file_exists($helperPath)) {
             </form>
         </div>
 
-        <!-- Demo Credentials -->
-        <div class="bg-white bg-opacity-20 rounded-lg p-4 text-white text-sm">
-            <h3 class="font-semibold mb-2">
-                <i class="fas fa-info-circle mr-2"></i>
-                Cuentas de Prueba:
-            </h3>
-            <div class="space-y-1">
-                <p><strong>Cliente:</strong> cliente@test.com / password</p>
-                <p><strong>Admin:</strong> admin@test.com / password</p>
-            </div>
-        </div>
+        
 
         <!-- Back to Home -->
         <div class="text-center">
-            <a href="/" class="inline-flex items-center text-white hover:text-pink-200 transition-colors">
+            <a href="/" class="inline-flex items-center text-white hover:text-pink-200 transition-colors text-lg">
                 <i class="fas fa-arrow-left mr-2"></i>
                 Volver al Inicio
             </a>

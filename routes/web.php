@@ -84,6 +84,15 @@ Route::get('/register', [\App\Http\Controllers\Web\AuthController::class, 'showR
 Route::post('/register', [\App\Http\Controllers\Web\AuthController::class, 'register'])->name('register.post');
 
 Route::post('/logout', [\App\Http\Controllers\Web\AuthController::class, 'logout'])->name('logout');
+Route::get('/logout', function () {
+    return redirect('/');
+});
+
+// Rutas de recuperación de contraseña
+Route::get('/olvide-contrasena', [\App\Http\Controllers\Web\PasswordResetController::class, 'showForgotPassword'])->name('password.forgot');
+Route::post('/olvide-contrasena', [\App\Http\Controllers\Web\PasswordResetController::class, 'sendResetLink'])->name('password.send-link');
+Route::get('/restablecer-contrasena/{token}', [\App\Http\Controllers\Web\PasswordResetController::class, 'showResetPassword'])->name('password.reset.form');
+Route::post('/restablecer-contrasena', [\App\Http\Controllers\Web\PasswordResetController::class, 'resetPassword'])->name('password.reset');
 
 // Rutas de transacciones
 Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
