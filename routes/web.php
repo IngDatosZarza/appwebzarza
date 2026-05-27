@@ -6,7 +6,6 @@ use App\Http\Controllers\Web\NotificationController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Web\BranchesController;
-use App\Http\Controllers\Web\CatalogController;
 use App\Http\Controllers\Web\DireccionController;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminCouponsController;
@@ -34,9 +33,6 @@ Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
 // Sucursales (público)
 Route::get('/sucursales', [BranchesController::class, 'index'])->name('branches.index');
-
-// Catálogo de productos (público)
-Route::get('/catalogo', [CatalogController::class, 'index'])->name('catalog.index');
 
 // Guía de acceso (pública)
 Route::get('/guia', function () {
@@ -99,14 +95,14 @@ Route::get('/transactions', [TransactionController::class, 'index'])->name('tran
 Route::get('/purchase', [TransactionController::class, 'showPurchaseForm'])->name('purchase.form');
 Route::post('/purchase', [TransactionController::class, 'storePurchase'])->name('purchase.store');
 
-// Rutas de tickets (requieren autenticación)
-Route::middleware('custom.auth')->group(function () {
-    Route::get('/tickets', [\App\Http\Controllers\Web\TicketController::class, 'index'])->name('tickets.index');
-    Route::get('/tickets/create', [\App\Http\Controllers\Web\TicketController::class, 'create'])->name('tickets.create');
-    Route::post('/tickets', [\App\Http\Controllers\Web\TicketController::class, 'store'])->name('tickets.store');
-    Route::get('/tickets/{id}', [\App\Http\Controllers\Web\TicketController::class, 'show'])->name('tickets.show');
-    Route::get('/tickets/check-ticket', [\App\Http\Controllers\Web\TicketController::class, 'checkTicket'])->name('tickets.check');
-});
+// Rutas de tickets (deshabilitadas - no incluidas en primera etapa)
+// Route::middleware('custom.auth')->group(function () {
+//     Route::get('/tickets', [\App\Http\Controllers\Web\TicketController::class, 'index'])->name('tickets.index');
+//     Route::get('/tickets/create', [\App\Http\Controllers\Web\TicketController::class, 'create'])->name('tickets.create');
+//     Route::post('/tickets', [\App\Http\Controllers\Web\TicketController::class, 'store'])->name('tickets.store');
+//     Route::get('/tickets/{id}', [\App\Http\Controllers\Web\TicketController::class, 'show'])->name('tickets.show');
+//     Route::get('/tickets/check-ticket', [\App\Http\Controllers\Web\TicketController::class, 'checkTicket'])->name('tickets.check');
+// });
 
 // Rutas de promociones para clientes (antes cupones)
 Route::get('/cupones', [\App\Http\Controllers\Web\CouponsController::class, 'myCoupons'])->name('coupons.index');
@@ -226,4 +222,15 @@ Route::withoutMiddleware(\App\Http\Middleware\QaAccessMiddleware::class)->group(
     })->name('qa.access.logout');
 
 });
+
+// ====================================================================
+// RUTAS DE PROPUESTAS DE DISEÑO (solo preview – no afectan el sistema)
+// ====================================================================
+Route::get('/propuesta/1', function () {
+    return view('proposals.proposal-1');
+})->name('proposal.1');
+
+Route::get('/propuesta/2', function () {
+    return view('proposals.proposal-2');
+})->name('proposal.2');
 

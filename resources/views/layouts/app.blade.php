@@ -181,10 +181,10 @@
         <div x-show="mobileOpen" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" class="md:hidden border-t border-white border-opacity-20">
             <div class="px-2 pt-2 pb-3 space-y-1">
                 <a href="{{ route('dashboard') }}" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
-                    <i class="fas fa-home w-5 mr-2"></i> Dashboard
+                    <i class="fas fa-home w-5 mr-2"></i> Inicio
                 </a>
                 @if(Session::get('user_rol') !== 'admin')
-                <a href="{{ route('catalog.index') }}" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
+                <a href="https://lazarza.com.mx/productos?category=PASTELES" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
                     <i class="fas fa-book w-5 mr-2"></i> Catálogo de Productos
                 </a>
                 <a href="https://momentoslazarza.com/pasteles-eventos/" target="_blank" rel="noopener noreferrer" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
@@ -193,9 +193,6 @@
                 @endif
                 @if(Session::get('user_authenticated', false))
                     @if(Session::get('user_rol') !== 'admin')
-                    <a href="{{ route('tickets.index') }}" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
-                        <i class="fas fa-receipt w-5 mr-2"></i> Tickets
-                    </a>
                     <a href="{{ route('purchases.index') }}" @click="mobileOpen = false" class="flex items-center text-white hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-md text-base font-medium transition-colors">
                         <i class="fas fa-shopping-cart w-5 mr-2"></i> Compras
                     </a>
@@ -314,7 +311,7 @@
                         <img src="/logoZarza.webp" alt="La Zarza Contigo" class="h-8 w-auto inline-block mr-2">
                         <h1 class="text-white text-lg font-bold whitespace-nowrap font-mercurius">La Zarza Contigo</h1>
                     </h3>
-                    <p class="text-gray-200"><span class="font-mercurius">La Zarza Contigo</span>: Celebramos tu preferencia con beneficios pensados especialmente para ti</p>
+                    <p class="text-gray-200"> Celebramos tu preferencia con beneficios pensados especialmente para ti</p>
                 </div>
                 <div>
                     <h4 class="text-md font-semibold mb-4">Enlaces Rápidos</h4>
@@ -360,6 +357,118 @@
             </div>
         </div>
     </footer>
+
+    <!-- Geolocation Script -->
+    <script>
+        /**
+         * Servicio de Geolocalización
+         * Solicita y guarda la ubicación del usuario automáticamente
+         */
+        (function() {
+            'use strict';
+
+            class GeolocationService {
+                constructor() {
+                    this.apiEndpoint = '/api/v1/location';
+                }
+
+                isSupported() {
+                    return 'geolocation' in navigator;
+                }
+
+                async getPosition() {
+                    if (!this.isSupported()) return null;
+
+                    return new Promise((resolve) => {
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => resolve({
+                                latitud: position.coords.latitude,
+                                longitud: position.coords.longitude
+                            }),
+                            (error) => {
+                                console.warn('No se pudo obtener la ubicación:', error.message);
+                                resolve(null);
+                            },
+                            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                        );
+                    });
+                }
+
+                async reverseGeocode(lat, lon) {
+                    try {
+                        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1&accept-language=es`;
+                        const response = await fetch(url, {
+                            headers: { 'User-Agent': 'LaZarzaContigoApp/1.0' }
+                        });
+
+                        if (!response.ok) throw new Error('Error en geocoding');
+
+                        const data = await response.json();
+                        return {
+                            ciudad: data.address.city || data.address.town || data.address.village || data.address.municipality || '',
+                            estado: data.address.state || '',
+                            pais: data.address.country || 'México'
+                        };
+                    } catch (error) {
+                        console.warn('Error obteniendo información de ubicación:', error);
+                        return { ciudad: '', estado: '', pais: 'México' };
+                    }
+                }
+
+                async saveLocation(locationData) {
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                        const response = await fetch(this.apiEndpoint, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken || ''
+                            },
+                            body: JSON.stringify(locationData)
+                        });
+
+                        return await response.json();
+                    } catch (error) {
+                        console.warn('Error guardando ubicación:', error);
+                        return null;
+                    }
+                }
+
+                async capture() {
+                    const position = await this.getPosition();
+                    if (!position) return null;
+
+                    const geoInfo = await this.reverseGeocode(position.latitud, position.longitud);
+                    const fullData = { ...position, ...geoInfo };
+
+                    return await this.saveLocation(fullData);
+                }
+            }
+
+            // Auto-ejecutar al cargar la página (solo una vez por sesión)
+            document.addEventListener('DOMContentLoaded', function() {
+                const locationRequested = sessionStorage.getItem('locationRequested');
+                
+                if (!locationRequested) {
+                    const service = new GeolocationService();
+                    
+                    // Esperar 2 segundos para no interrumpir la carga de la página
+                    setTimeout(() => {
+                        service.capture().then((result) => {
+                            if (result && result.success) {
+                                console.log('✅ Ubicación guardada exitosamente');
+                            }
+                        });
+                        sessionStorage.setItem('locationRequested', 'true');
+                    }, 2000);
+                }
+            });
+
+            // Exportar para uso global si se necesita
+            window.GeolocationService = GeolocationService;
+        })();
+    </script>
 
     @stack('scripts')
 </body>

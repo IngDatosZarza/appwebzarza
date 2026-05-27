@@ -111,6 +111,16 @@ class Usuario extends Authenticatable
         return $this->hasMany(TransaccionPuntos::class);
     }
 
+    public function ubicaciones()
+    {
+        return $this->hasMany(\App\Models\UbicacionUsuario::class);
+    }
+
+    public function ultimaUbicacion()
+    {
+        return $this->hasOne(\App\Models\UbicacionUsuario::class)->latestOfMany();
+    }
+
     public function cuponesAsignados()
     {
         return $this->hasMany(CuponAsignado::class);

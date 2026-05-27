@@ -15,10 +15,6 @@
             </h1>
             <p class="text-gray-600 mt-2">Consulta el historial de compras que has registrado.</p>
         </div>
-        <a href="{{ route('tickets.create') }}" class="btn-primary text-white px-5 py-3 rounded-lg shadow-sm inline-flex items-center gap-2">
-            <i class="fas fa-receipt"></i>
-            Registrar nuevo ticket
-        </a>
     </div>
 
     <!-- Resumen -->
@@ -46,11 +42,7 @@
                     <i class="fas fa-shopping-basket text-2xl"></i>
                 </div>
                 <h3 class="text-lg font-semibold text-gray-900 mb-2">Aún no registras compras</h3>
-                <p class="text-gray-500 mb-6">Registra tus tickets de compra para llevar tu historial.</p>
-                <a href="{{ route('tickets.create') }}" class="btn-primary text-white px-5 py-3 rounded-lg shadow-sm inline-flex items-center gap-2">
-                    <i class="fas fa-plus"></i>
-                    Registrar ticket
-                </a>
+                <p class="text-gray-500 mb-6">Tus compras aparecerán aquí cuando sean registradas.</p>
             </div>
         @else
             <div class="overflow-x-auto">

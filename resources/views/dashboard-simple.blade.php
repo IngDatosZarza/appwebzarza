@@ -32,6 +32,7 @@
     /* Primary CTA button */
     .btn-cta-primary {
         background: linear-gradient(135deg, #b51a8a 0%, #d63a9e 100%);
+        border: 2px solid rgba(255, 255, 255, 0.8);
         transition: all 0.3s ease;
         box-shadow: 0 4px 20px rgba(181, 26, 138, 0.45);
     }
@@ -228,8 +229,8 @@
         <div class="w-full max-w-2xl">
 
             {{-- Badge promo --}}
-            <div class="flex justify-center mb-6">
-                <span class="badge-promo inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2 rounded-full shadow-lg">
+            <div class="mb-6">
+                <span class="badge-promo inline-flex w-full justify-center items-center gap-2 text-white text-sm font-semibold px-5 py-2 rounded-full shadow-lg">
                     <i class="fas fa-gem"></i> ¡Bienvenido al programa de fidelidad!
                 </span>
             </div>

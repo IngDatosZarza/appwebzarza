@@ -136,11 +136,7 @@
     </div>
 
     {{-- Acciones rápidas --}}
-    <div class="mt-4 grid grid-cols-2 gap-3">
-        <a href="{{ route('tickets.create') }}"
-           class="flex items-center justify-center gap-2 bg-white/20 hover:bg-white/30 text-white font-semibold rounded-xl py-3 text-sm shadow hover:shadow-md transition border border-white/20">
-            <i class="fas fa-receipt"></i> Registrar ticket
-        </a>
+    <div class="mt-4 grid grid-cols-1 gap-3">
         <a href="{{ route('coupons.index') }}"
            class="flex items-center justify-center gap-2 bg-white/20 hover:bg-white/30 text-white font-semibold rounded-xl py-3 text-sm shadow hover:shadow-md transition border border-white/20">
             <i class="fas fa-tags"></i> Promociones

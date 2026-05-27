@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\PurchaseController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\CodigoPostalController;
+use App\Http\Controllers\Api\LocationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -31,6 +32,9 @@ Route::prefix('v1')->group(function () {
     
     // Estadísticas públicas
     Route::get('/stats/purchases', [PurchaseController::class, 'stats']);
+    
+    // Ubicación (público - para guardar ubicación antes de autenticarse)
+    Route::post('/location', [LocationController::class, 'store']);
 });
 
 // Rutas públicas de códigos postales (sin versión para el formulario de registro)
@@ -48,6 +52,10 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::get('/auth/profile', [AuthController::class, 'profile']);
     Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
+    
+    // Ubicaciones del usuario
+    Route::get('/location', [LocationController::class, 'show']); // Última ubicación
+    Route::get('/locations', [LocationController::class, 'index']); // Historial
     
     // Compras
     Route::apiResource('purchases', PurchaseController::class)->only(['index', 'show', 'store']);
@@ -90,6 +98,7 @@ Route::prefix('v1/admin')->middleware(['auth:sanctum', 'role:admin'])->group(fun
     });
     
     Route::get('/reports/sales', [PurchaseController::class, 'stats']);
+    Route::get('/reports/locations', [LocationController::class, 'stats']); // Estadísticas de ubicación
     
 });
 
