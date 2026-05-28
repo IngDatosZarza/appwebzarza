@@ -39,6 +39,11 @@ Route::get('/guia', function () {
     return view('guia-acceso');
 });
 
+// Test de geolocalización (público)
+Route::get('/test-geolocation', function () {
+    return view('test-geolocation');
+})->name('test.geolocation');
+
 // Ruta de prueba de perfil (temporal)
 Route::get('/test-profile', function () {
     if (!Session::get('user_authenticated', false)) {
