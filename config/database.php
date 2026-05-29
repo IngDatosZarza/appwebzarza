@@ -97,7 +97,7 @@ return [
             'search_path' => env('DB_SCHEMA', 'public'),
             'sslmode' => 'prefer',
             'options' => extension_loaded('pdo_pgsql') ? [
-                PDO::ATTR_EMULATE_PREPARES => true,
+                PDO::ATTR_EMULATE_PREPARES => false,
                 PDO::ATTR_STRINGIFY_FETCHES => false,
             ] : [],
         ],

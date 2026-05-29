@@ -43,6 +43,14 @@ class UbicacionUsuario extends Model
     ];
 
     /**
+     * Mutator para asegurar que es_primera_visita sea booleano para PostgreSQL
+     */
+    public function setEsPrimeraVisitaAttribute($value)
+    {
+        $this->attributes['es_primera_visita'] = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
+    }
+
+    /**
      * Relación con el usuario
      */
     public function usuario()

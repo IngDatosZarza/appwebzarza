@@ -47,9 +47,9 @@ class LocationController extends Controller
             // Crear registro de ubicación
             $ubicacion = UbicacionUsuario::create([
                 'usuario_id' => Auth::id(), // Null si no está autenticado
-                'latitud' => $request->latitud,
-                'longitud' => $request->longitud,
-                'precision' => $request->precision,
+                'latitud' => (float) $request->latitud,
+                'longitud' => (float) $request->longitud,
+                'precision' => $request->precision ? (float) $request->precision : null,
                 'ciudad' => $request->ciudad,
                 'estado' => $request->estado,
                 'pais' => $request->pais ?? 'México',
@@ -62,7 +62,7 @@ class LocationController extends Controller
                 'pagina_origen' => $request->header('Referer') ?? $request->input('pagina_origen'),
                 'evento' => $request->evento ?? 'navegacion',
                 'session_id' => $sessionId,
-                'es_primera_visita' => $esPrimeraVisita,
+                'es_primera_visita' => (bool) $esPrimeraVisita,
                 'metadata' => $request->metadata,
             ]);
 

@@ -35,7 +35,7 @@ class TestLocationInsert extends Command
                 'evento' => 'test',
                 'session_id' => 'test-session-' . time(),
                 'es_primera_visita' => true,
-                'metadata' => json_encode(['test' => true, 'source' => 'artisan']),
+                'metadata' => ['test' => true, 'source' => 'artisan'],
             ];
 
             $this->info('Datos a insertar:');
